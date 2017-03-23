@@ -167,10 +167,18 @@
             style="@style/style_spinner">
         </Spinner>
 
+        <Button
+            android:id="@+id/attachment_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:text="Pilih Lampiran..."/>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp">
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="10dp">
             <ImageView
                 android:id="@+id/captcha_imageview"
                 android:layout_width="0dp"

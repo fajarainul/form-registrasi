@@ -2,6 +2,7 @@ package com.digitcreativestudio.registrasi;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -40,11 +41,13 @@ public class MainActivity extends AppCompatActivity {
 
     Spinner licenseSpinner, licenseRegionSpinner;
 
-    Button saveButton;
-
     Captcha captcha;
+
     ImageView captchaImageView;
     EditText captchaEditText;
+
+    Button attachButton;
+    Button saveButton;
 
     List<String> mIdTypes = new ArrayList<>();
     List<Province> provinces = new ArrayList<>();
@@ -87,6 +90,8 @@ public class MainActivity extends AppCompatActivity {
         licenseSpinner = (Spinner) findViewById(R.id.license_spinner);
         licenseRegionSpinner = (Spinner) findViewById(R.id.license_region_spinner);
 
+        attachButton = (Button) findViewById(R.id.attachment_button);
+
         captchaImageView = (ImageView) findViewById(R.id.captcha_imageview);
         captchaEditText = (EditText) findViewById(R.id.captcha_edittext);
 
@@ -98,16 +103,88 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        initiate();
+
         initiateCaptcha();
         getIdType();
 
         getProvinces(true);
         getProvinces(false);
+
+        getLicenses();
+    }
+
+    private void initiate(){
+        String[] defaultRegency = new String[1];
+        String[] defaultDistrict = new String[1];
+        String[] defaultVillage = new String[1];
+        String[] defaultLicenseRegion = new String[1];
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            idEditText.setHint(Html.fromHtml("ID Pemohon<sup>*</sup>", Html.FROM_HTML_MODE_LEGACY).toString());
+            nameEditText.setHint(Html.fromHtml("Nama Pemohon<sup>*</sup>", Html.FROM_HTML_MODE_LEGACY).toString());
+            phoneEditText.setHint(Html.fromHtml("Telp Pemohon<sup>*</sup>", Html.FROM_HTML_MODE_LEGACY).toString());
+            addressEditText.setHint(Html.fromHtml("Alamat Pemohon<sup>*</sup>", Html.FROM_HTML_MODE_LEGACY).toString());
+
+            defaultRegency[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+            defaultDistrict[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+            defaultVillage[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+            defaultLicenseRegion[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+        } else {
+            idEditText.setHint(Html.fromHtml("ID Pemohon<sup>*</sup>").toString());
+            nameEditText.setHint(Html.fromHtml("Nama Pemohon<sup>*</sup>").toString());
+            phoneEditText.setHint(Html.fromHtml("Telp Pemohon<sup>*</sup>").toString());
+            addressEditText.setHint(Html.fromHtml("Alamat Pemohon<sup>*</sup>").toString());
+
+            defaultRegency[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:").toString();
+            defaultDistrict[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:").toString();
+            defaultVillage[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:").toString();
+            defaultLicenseRegion[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:").toString();
+
+            attachButton.setText(Html.fromHtml("Pilih Lampiran<sup>*</sup>...").toString());
+        }
+
+        ArrayAdapter<String> adapterRegency = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultRegency);
+        adapterRegency.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        regencySpinner.setAdapter(adapterRegency);
+
+        String[] defaultRegencyCompany = new String[1];
+        defaultRegencyCompany[0] = "Pilih Kabupaten:";
+        ArrayAdapter<String> adapterRegencyCompany = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultRegencyCompany);
+        adapterRegency.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        companyRegencySpinner.setAdapter(adapterRegencyCompany);
+
+        ArrayAdapter<String> adapterDistrict = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultDistrict);
+        adapterDistrict.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        districtSpinner.setAdapter(adapterDistrict);
+
+        String[] defaultDistrictCompany = new String[1];
+        defaultDistrictCompany[0] = "Pilih Kecamatan:";
+        ArrayAdapter<String> adapterDistrictCompany = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultDistrictCompany);
+        adapterRegency.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        companyDistrictSpinner.setAdapter(adapterDistrictCompany);
+
+        ArrayAdapter<String> adapterVillage = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultVillage);
+        adapterVillage.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        villageSpinner.setAdapter(adapterVillage);
+
+        String[] defaultVillageCompany = new String[1];
+        defaultVillageCompany[0] = "Pilih Kelurahan:";
+        ArrayAdapter<String> adapterVillageCompany = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultVillageCompany);
+        adapterRegency.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        companyVillageSpinner.setAdapter(adapterVillageCompany);
+
+        ArrayAdapter<String> adapterLicenseRegion = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultLicenseRegion);
+        adapterLicenseRegion.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        licenseRegionSpinner.setAdapter(adapterLicenseRegion);
     }
 
     private void getIdType(){
         mIdTypes = new ArrayList<>();
-        mIdTypes.add("Pilih Identitas:");
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            mIdTypes.add(Html.fromHtml("Pilih Identitas<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString());
+        }else {
+            mIdTypes.add(Html.fromHtml("Pilih Identitas<sup>*</sup>:").toString());
+        }
         mIdTypes.add("KTP");
         mIdTypes.add("SIM");
         mIdTypes.add("PASSPORT");
@@ -134,7 +211,15 @@ public class MainActivity extends AppCompatActivity {
                 final List<Province> prov = response.body();
 
                 String[] provinceArray = new String[prov.size()+1];
-                provinceArray[0] = "Pilih Provinsi:";
+                if(isSelf) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        provinceArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                    } else {
+                        provinceArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:").toString();
+                    }
+                }else{
+                    provinceArray[0] = "Pilih Provinsi:";
+                }
                 for(int i = 1; i <= prov.size(); i++){
                     provinceArray[i] = prov.get(i-1).getName();
                 }
@@ -184,7 +269,15 @@ public class MainActivity extends AppCompatActivity {
                 final List<Regency> reg = response.body();
 
                 String[] regencyArray = new String[reg.size()+1];
-                regencyArray[0] = "Pilih Kabupaten:";
+                if(isSelf) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        regencyArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                    } else {
+                        regencyArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:").toString();
+                    }
+                }else{
+                    regencyArray[0] = "Pilih Kabupaten:";
+                }
                 for(int i = 1; i <= reg.size(); i++){
                     regencyArray[i] = reg.get(i-1).getName();
                 }
@@ -234,7 +327,15 @@ public class MainActivity extends AppCompatActivity {
                 final List<District> dis = response.body();
 
                 String[] districtArray = new String[dis.size()+1];
-                districtArray[0] = "Pilih Kecamatan:";
+                if(isSelf) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        districtArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                    } else {
+                        districtArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:").toString();
+                    }
+                }else{
+                    districtArray[0] = "Pilih Kecamatan:";
+                }
                 for(int i = 1; i <= dis.size(); i++){
                     districtArray[i] = dis.get(i-1).getName();
                 }
@@ -284,7 +385,15 @@ public class MainActivity extends AppCompatActivity {
                 final List<Village> vil = response.body();
 
                 String[] districtArray = new String[vil.size()+1];
-                districtArray[0] = "Pilih Kelurahan:";
+                if(isSelf) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        districtArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                    } else {
+                        districtArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:").toString();
+                    }
+                }else{
+                    districtArray[0] = "Pilih Kelurahan:";
+                }
                 for(int i = 1; i <= vil.size(); i++){
                     districtArray[i] = vil.get(i-1).getName();
                 }
@@ -314,6 +423,18 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private void getLicenses(){
+        String[] provinceArray = new String[1];
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            provinceArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+        }else {
+            provinceArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:").toString();
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, provinceArray);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        licenseSpinner.setAdapter(adapter);
     }
 
     private void initiateCaptcha(){
