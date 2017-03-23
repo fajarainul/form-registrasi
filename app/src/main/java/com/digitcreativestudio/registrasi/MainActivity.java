@@ -1,5 +1,9 @@
 package com.digitcreativestudio.registrasi;
 
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
@@ -21,8 +25,10 @@ import com.digitcreativestudio.registrasi.connection.RegisterService;
 import com.digitcreativestudio.registrasi.entity.District;
 import com.digitcreativestudio.registrasi.entity.Province;
 import com.digitcreativestudio.registrasi.entity.Regency;
+import com.digitcreativestudio.registrasi.entity.SubmitResponse;
 import com.digitcreativestudio.registrasi.entity.Village;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +39,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
+    private static final int FILE_SELECT_CODE = 0;
+
     Spinner idTypeSpinner, provinceSpinner, regencySpinner, districtSpinner, villageSpinner;
     EditText idEditText, nameEditText, phoneEditText, addressEditText;
 
@@ -91,6 +99,12 @@ public class MainActivity extends AppCompatActivity {
         licenseRegionSpinner = (Spinner) findViewById(R.id.license_region_spinner);
 
         attachButton = (Button) findViewById(R.id.attachment_button);
+        attachButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showFileChooser();
+            }
+        });
 
         captchaImageView = (ImageView) findViewById(R.id.captcha_imageview);
         captchaEditText = (EditText) findViewById(R.id.captcha_edittext);
@@ -319,10 +333,10 @@ public class MainActivity extends AppCompatActivity {
                 Spinner spinner;
                 if(isSelf){
                     districts = response.body();
-                    spinner = regencySpinner;
+                    spinner = districtSpinner;
                 }else{
                     districtsCompany = response.body();
-                    spinner = companyRegencySpinner;
+                    spinner = companyDistrictSpinner;
                 }
                 final List<District> dis = response.body();
 
@@ -377,10 +391,10 @@ public class MainActivity extends AppCompatActivity {
                 Spinner spinner;
                 if(isSelf){
                     villages = response.body();
-                    spinner = regencySpinner;
+                    spinner = villageSpinner;
                 }else{
                     villagesCompany = response.body();
-                    spinner = companyRegencySpinner;
+                    spinner = companyVillageSpinner;
                 }
                 final List<Village> vil = response.body();
 
@@ -444,6 +458,69 @@ public class MainActivity extends AppCompatActivity {
         captchaImageView.setLayoutParams(new LinearLayout.LayoutParams(captcha.getWidth() *2, captcha.getHeight() *2));
     }
 
+    private void showFileChooser() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+        try {
+            startActivityForResult(
+                    Intent.createChooser(intent, "Select a File to Upload"),
+                    FILE_SELECT_CODE);
+        } catch (android.content.ActivityNotFoundException ex) {
+            // Potentially direct the user to the Market with a Dialog
+            Toast.makeText(this, "Please install a File Manager.",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case FILE_SELECT_CODE:
+                if (resultCode == RESULT_OK) {
+                    // Get the Uri of the selected file
+                    Uri uri = data.getData();
+                    Log.d("PATH", "File Uri: " + uri.toString());
+                    // Get the path
+                    String path = "";
+                    try{
+                        path = getPath(this, uri);
+                    }catch (URISyntaxException use){
+                        use.printStackTrace();
+                    }
+                    Log.d("PATH", "File Path: " + path);
+                    // Get the file instance
+                    // File file = new File(path);
+                    // Initiate the upload
+                }
+                break;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private static String getPath(Context context, Uri uri) throws URISyntaxException {
+        if ("content".equalsIgnoreCase(uri.getScheme())) {
+            String[] projection = { "_data" };
+            Cursor cursor = null;
+
+            try {
+                cursor = context.getContentResolver().query(uri, projection, null, null, null);
+                int column_index = cursor.getColumnIndexOrThrow("_data");
+                if (cursor.moveToFirst()) {
+                    return cursor.getString(column_index);
+                }
+            } catch (Exception e) {
+                // Eat it
+            }
+        }
+        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+
+        return null;
+    }
+
     private void validate(){
         Log.e("CAPTCHA", String.valueOf(captcha.checkAnswer(captchaEditText.getText().toString())));
         if((idEditText.getText().toString().trim().equals("") ||
@@ -457,7 +534,7 @@ public class MainActivity extends AppCompatActivity {
             (villageSpinner.getSelectedItemPosition()-1) < 0 ||
             (licenseSpinner.getSelectedItemPosition()-1) < 0 ||
             (licenseRegionSpinner.getSelectedItemPosition()-1) < 0)){
-            Toast.makeText(MainActivity.this, "Periksa kembali form yang harus diisi", Toast.LENGTH_LONG).show();
+            Toast.makeText(MainActivity.this, "Harap isi semua data yang bertanda bintang (*).", Toast.LENGTH_LONG).show();
 
             initiateCaptcha();
             return;
@@ -472,5 +549,55 @@ public class MainActivity extends AppCompatActivity {
         submit();
     }
 
-    private void submit(){}
+    private void submit(){
+        Province province = provinces.get(provinceSpinner.getSelectedItemPosition()-1);
+        Regency regency = regencies.get(regencySpinner.getSelectedItemPosition()-1);
+        District district = districts.get(districtSpinner.getSelectedItemPosition()-1);
+        Village village = villages.get(villageSpinner.getSelectedItemPosition()-1);
+        Province companyProvince = provincesCompany.get(companyProvinceSpinner.getSelectedItemPosition()-1);
+        Regency companyRegency = regenciesCompany.get(companyRegencySpinner.getSelectedItemPosition()-1);
+        District companyDistrict = districtsCompany.get(companyDistrictSpinner.getSelectedItemPosition()-1);
+        Village companyVillage = villagesCompany.get(companyVillageSpinner.getSelectedItemPosition()-1);
+        RegisterService registerService =
+                RegisterClient.getClient().create(RegisterService.class);
+        Call<SubmitResponse> call = registerService.submit(mIdTypes.get(idTypeSpinner.getSelectedItemPosition()),
+                idEditText.getText().toString(),
+                nameEditText.getText().toString(),
+                phoneEditText.getText().toString(),
+                addressEditText.getText().toString(),
+                String.valueOf(province.getId()),
+                province.getName(),
+                String.valueOf(regency.getId()),
+                regency.getName(),
+                String.valueOf(district.getId()),
+                district.getName(),
+                String.valueOf(village.getId()),
+                village.getName(),
+                companyNpwpEditText.getText().toString(),
+                companyNoEditText.getText().toString(),
+                companyNameEditText.getText().toString(),
+                companyAddressEditText.getText().toString(),
+                companyPhoneEditText.getText().toString(),
+                String.valueOf(companyProvince.getId()),
+                companyProvince.getName(),
+                String.valueOf(companyRegency.getId()),
+                companyRegency.getName(),
+                String.valueOf(companyDistrict.getId()),
+                companyDistrict.getName(),
+                String.valueOf(companyVillage.getId()),
+                companyVillage.getName());
+        call.enqueue(new Callback<SubmitResponse>() {
+            @Override
+            public void onResponse(Call<SubmitResponse> call, Response<SubmitResponse> response) {
+                Log.e("CODE", String.valueOf(response.code()));
+                Log.e("SUCCESS", String.valueOf(response.body().isSuccess()));
+                Log.e("ERROR", String.valueOf(response.body().isError()));
+            }
+
+            @Override
+            public void onFailure(Call<SubmitResponse> call, Throwable t) {
+
+            }
+        });
+    }
 }
