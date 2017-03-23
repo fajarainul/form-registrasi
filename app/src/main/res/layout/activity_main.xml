@@ -23,52 +23,61 @@
             android:layout_marginTop="5dp"/>
 
         <Spinner
+            android:id="@+id/id_type_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="10dp"
             style="@style/style_spinner">
         </Spinner>
 
         <EditText
+            android:id="@+id/id_edittext"
             android:layout_width="match_parent"
             android:hint="ID Pemohon"
             style="@style/style_edittext"/>
 
         <EditText
+            android:id="@+id/name_edittext"
             android:layout_width="match_parent"
             android:hint="Nama Pemohon"
             style="@style/style_edittext"/>
 
         <EditText
+            android:id="@+id/phone_edittext"
             android:layout_width="match_parent"
             android:hint="Telp Pemohon"
             android:inputType="phone"
             style="@style/style_edittext"/>
 
         <EditText
+            android:id="@+id/address_edittext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Alamat Pemohon"
             style="@style/style_textarea"/>
 
         <Spinner
+            android:id="@+id/province_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="10dp"
             style="@style/style_spinner">
         </Spinner>
 
         <Spinner
+            android:id="@+id/regency_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="10dp"
             style="@style/style_spinner">
         </Spinner>
 
         <Spinner
+            android:id="@+id/district_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="10dp"
             style="@style/style_spinner">
         </Spinner>
 
         <Spinner
+            android:id="@+id/village_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="10dp"
             style="@style/style_spinner">
@@ -80,51 +89,60 @@
             android:layout_marginTop="5dp"/>
 
         <EditText
+            android:id="@+id/company_npwp_edittext"
             android:layout_width="match_parent"
             android:hint="NPWP Perusahaan"
             style="@style/style_edittext"/>
 
         <EditText
+            android:id="@+id/company_no_edittext"
             android:layout_width="match_parent"
             android:hint="No Register Perusahaan"
             style="@style/style_edittext"/>
 
         <EditText
+            android:id="@+id/company_name_edittext"
             android:layout_width="match_parent"
             android:hint="Nama Perusahaan"
             style="@style/style_edittext"/>
 
         <EditText
+            android:id="@+id/company_address_edittext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Alamat Perusahaan"
             style="@style/style_textarea"/>
 
         <EditText
+            android:id="@+id/company_phone_edittext"
             android:layout_width="match_parent"
             android:hint="Telp Perusahaan"
             android:inputType="phone"
             style="@style/style_edittext"/>
 
         <Spinner
+            android:id="@+id/company_province_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="10dp"
             style="@style/style_spinner">
         </Spinner>
 
         <Spinner
+            android:id="@+id/company_regency_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="10dp"
             style="@style/style_spinner">
         </Spinner>
 
         <Spinner
+            android:id="@+id/company_district_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="10dp"
             style="@style/style_spinner">
         </Spinner>
 
         <Spinner
+            android:id="@+id/company_village_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="10dp"
             style="@style/style_spinner">
@@ -136,17 +154,25 @@
             android:layout_marginTop="5dp"/>
 
         <Spinner
+            android:id="@+id/license_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="10dp"
             style="@style/style_spinner">
         </Spinner>
 
         <Spinner
+            android:id="@+id/license_region_spinner"
             android:layout_width="match_parent"
             android:layout_marginTop="10dp"
             style="@style/style_spinner">
         </Spinner>
 
+        <Button
+            android:id="@+id/save_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Simpan"/>
     </LinearLayout>
 
 
