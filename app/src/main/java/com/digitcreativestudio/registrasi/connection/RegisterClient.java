@@ -7,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 /**
  * Created by faqiharifian on 23/09/16.
  */
-public class TmdbClient {
+public class RegisterClient {
     public static final String BASE_URL = "http://fajarainul.informatikaundip.com/register/";
     private static Retrofit retrofit = null;
 

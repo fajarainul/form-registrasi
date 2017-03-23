@@ -15,7 +15,7 @@ import retrofit2.http.Query;
 /**
  * Created by faqiharifian on 23/09/16.
  */
-public interface TmdbService {
+public interface RegisterService {
     @Headers("Content-Type: application/json")
     @GET("get_provinsi.php")
     Call<List<Province>> getProvinces();

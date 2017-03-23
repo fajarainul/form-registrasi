@@ -16,8 +16,8 @@ import android.widget.Toast;
 
 import com.digitcreativestudio.registrasi.CAPTCHA.Captcha;
 import com.digitcreativestudio.registrasi.CAPTCHA.MathCaptcha;
-import com.digitcreativestudio.registrasi.connection.TmdbClient;
-import com.digitcreativestudio.registrasi.connection.TmdbService;
+import com.digitcreativestudio.registrasi.connection.RegisterClient;
+import com.digitcreativestudio.registrasi.connection.RegisterService;
 import com.digitcreativestudio.registrasi.entity.District;
 import com.digitcreativestudio.registrasi.entity.Province;
 import com.digitcreativestudio.registrasi.entity.Regency;
@@ -194,9 +194,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getProvinces(final boolean isSelf){
-        TmdbService tmdbService =
-                TmdbClient.getClient().create(TmdbService.class);
-        Call<List<Province>> provinceCall = tmdbService.getProvinces();
+        RegisterService registerService =
+                RegisterClient.getClient().create(RegisterService.class);
+        Call<List<Province>> provinceCall = registerService.getProvinces();
         provinceCall.enqueue(new Callback<List<Province>>() {
             @Override
             public void onResponse(Call<List<Province>> call, Response<List<Province>> response) {
@@ -252,9 +252,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getRegencies(int idProvince, final boolean isSelf){
-        TmdbService tmdbService =
-                TmdbClient.getClient().create(TmdbService.class);
-        Call<List<Regency>> regencyCall = tmdbService.getRegencies(idProvince);
+        RegisterService registerService =
+                RegisterClient.getClient().create(RegisterService.class);
+        Call<List<Regency>> regencyCall = registerService.getRegencies(idProvince);
         regencyCall.enqueue(new Callback<List<Regency>>() {
             @Override
             public void onResponse(Call<List<Regency>> call, Response<List<Regency>> response) {
@@ -310,9 +310,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getDistricts(int idRegency, final boolean isSelf){
-        TmdbService tmdbService =
-                TmdbClient.getClient().create(TmdbService.class);
-        Call<List<District>> districtCall = tmdbService.getDistricts(idRegency);
+        RegisterService registerService =
+                RegisterClient.getClient().create(RegisterService.class);
+        Call<List<District>> districtCall = registerService.getDistricts(idRegency);
         districtCall.enqueue(new Callback<List<District>>() {
             @Override
             public void onResponse(Call<List<District>> call, Response<List<District>> response) {
@@ -368,9 +368,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getVillages(int idDistrict, final boolean isSelf){
-        TmdbService tmdbService =
-                TmdbClient.getClient().create(TmdbService.class);
-        Call<List<Village>> villageCall = tmdbService.getVillages(idDistrict);
+        RegisterService registerService =
+                RegisterClient.getClient().create(RegisterService.class);
+        Call<List<Village>> villageCall = registerService.getVillages(idDistrict);
         villageCall.enqueue(new Callback<List<Village>>() {
             @Override
             public void onResponse(Call<List<Village>> call, Response<List<Village>> response) {
