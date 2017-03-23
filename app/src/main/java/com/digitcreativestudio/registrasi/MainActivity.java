@@ -589,9 +589,7 @@ public class MainActivity extends AppCompatActivity {
         call.enqueue(new Callback<SubmitResponse>() {
             @Override
             public void onResponse(Call<SubmitResponse> call, Response<SubmitResponse> response) {
-                Log.e("CODE", String.valueOf(response.code()));
-                Log.e("SUCCESS", String.valueOf(response.body().isSuccess()));
-                Log.e("ERROR", String.valueOf(response.body().isError()));
+                Toast.makeText(MainActivity.this, "Berhasil Disimpan.", Toast.LENGTH_SHORT).show();
             }
 
             @Override
