@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,11 +15,21 @@ import android.widget.Toast;
 
 import com.digitcreativestudio.registrasi.CAPTCHA.Captcha;
 import com.digitcreativestudio.registrasi.CAPTCHA.MathCaptcha;
+import com.digitcreativestudio.registrasi.connection.TmdbClient;
+import com.digitcreativestudio.registrasi.connection.TmdbService;
+import com.digitcreativestudio.registrasi.entity.District;
+import com.digitcreativestudio.registrasi.entity.Province;
+import com.digitcreativestudio.registrasi.entity.Regency;
+import com.digitcreativestudio.registrasi.entity.Village;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
     Spinner idTypeSpinner, provinceSpinner, regencySpinner, districtSpinner, villageSpinner;
@@ -35,7 +46,16 @@ public class MainActivity extends AppCompatActivity {
     ImageView captchaImageView;
     EditText captchaEditText;
 
-    List<String> mIdTypes;
+    List<String> mIdTypes = new ArrayList<>();
+    List<Province> provinces = new ArrayList<>();
+    List<Province> provincesCompany = new ArrayList<>();
+    List<Regency> regencies = new ArrayList<>();
+    List<Regency> regenciesCompany = new ArrayList<>();
+    List<District> districts = new ArrayList<>();
+    List<District> districtsCompany = new ArrayList<>();
+    List<Village> villages = new ArrayList<>();
+    List<Village> villagesCompany = new ArrayList<>();
+
     Map<String, String> input = new HashMap<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,8 +101,8 @@ public class MainActivity extends AppCompatActivity {
         initiateCaptcha();
         getIdType();
 
-        getProvinces();
-        getCompanyProvinces();
+        getProvinces(true);
+        getProvinces(false);
     }
 
     private void getIdType(){
@@ -96,11 +116,161 @@ public class MainActivity extends AppCompatActivity {
         idTypeSpinner.setAdapter(adapter);
     }
 
-    private void getProvinces(){
+    private void getProvinces(final boolean isSelf){
+        TmdbService tmdbService =
+                TmdbClient.getClient().create(TmdbService.class);
+        Call<List<Province>> provinceCall = tmdbService.getProvinces();
+        provinceCall.enqueue(new Callback<List<Province>>() {
+            @Override
+            public void onResponse(Call<List<Province>> call, Response<List<Province>> response) {
+                Spinner spinner;
+                if(isSelf){
+                    provinces = response.body();
+                    spinner = provinceSpinner;
+                }else{
+                    provincesCompany = response.body();
+                    spinner = companyProvinceSpinner;
+                }
+                final List<Province> prov = response.body();
+
+                String[] provinceArray = new String[prov.size()+1];
+                provinceArray[0] = "Pilih Provinsi:";
+                for(int i = 1; i <= prov.size(); i++){
+                    provinceArray[i] = prov.get(i-1).getName();
+                }
+
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, provinceArray);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinner.setAdapter(adapter);
+
+                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                        if(!(i-1 < 0)) {
+                            Province province = prov.get(i-1);
+                            getRegencies(province.getId(), isSelf);
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> adapterView) {
+
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Call<List<Province>> call, Throwable t) {
+
+            }
+        });
+    }
+
+    private void getRegencies(int idProvince, final boolean isSelf){
+        TmdbService tmdbService =
+                TmdbClient.getClient().create(TmdbService.class);
+        Call<List<Regency>> regencyCall = tmdbService.getRegencies(idProvince);
+        regencyCall.enqueue(new Callback<List<Regency>>() {
+            @Override
+            public void onResponse(Call<List<Regency>> call, Response<List<Regency>> response) {
+                if(isSelf){
+                    regencies = response.body();
+                }else{
+                    regenciesCompany = response.body();
+                }
+                final List<Regency> reg = response.body();
+
+                String[] regencyArray = new String[reg.size()+1];
+                regencyArray[0] = "Pilih Kabupaten:";
+                for(int i = 1; i <= reg.size(); i++){
+                    regencyArray[i] = reg.get(i-1).getName();
+                }
+
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, regencyArray);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                if(isSelf)
+                    regencySpinner.setAdapter(adapter);
+                else
+                    companyRegencySpinner.setAdapter(adapter);
+//
+//                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//                    @Override
+//                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+//                        if(!(i-1 < 0)) {
+//                            Regency regency = reg.get(i-1);
+//                            getDistricts(regency.getId(), isSelf);
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onNothingSelected(AdapterView<?> adapterView) {
+//
+//                    }
+//                });
+            }
+
+            @Override
+            public void onFailure(Call<List<Regency>> call, Throwable t) {
+
+            }
+        });
+    }
+
+    public void getDistricts(int idRegency, final boolean isSelf){
+        TmdbService tmdbService =
+                TmdbClient.getClient().create(TmdbService.class);
+        Call<List<District>> districtCall = tmdbService.getDistricts(idRegency);
+        districtCall.enqueue(new Callback<List<District>>() {
+            @Override
+            public void onResponse(Call<List<District>> call, Response<List<District>> response) {
+                Spinner spinner;
+                if(isSelf){
+                    districts = response.body();
+                    spinner = regencySpinner;
+                }else{
+                    districtsCompany = response.body();
+                    spinner = companyRegencySpinner;
+                }
+                final List<District> dis = response.body();
+
+                String[] districtArray = new String[dis.size()+1];
+                districtArray[0] = "Pilih Kecamatan:";
+                for(int i = 1; i <= dis.size(); i++){
+                    districtArray[i] = dis.get(i-1).getName();
+                }
+
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, districtArray);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinner.setAdapter(adapter);
+
+                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                        if(!(i-1 < 0)) {
+                            District district = dis.get(i-1);
+                            Log.e("self "+isSelf, district.getId()+" - "+district.getName());
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> adapterView) {
+
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Call<List<District>> call, Throwable t) {
+
+            }
+        });
+    }
+
+    public void getRegions(char type, int id, final boolean isSelf){
 
     }
 
-    private void getCompanyProvinces(){
+    private void populateSpinner(char type, Spinner spinner){
 
     }
 
