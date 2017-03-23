@@ -173,10 +173,13 @@ public class MainActivity extends AppCompatActivity {
         regencyCall.enqueue(new Callback<List<Regency>>() {
             @Override
             public void onResponse(Call<List<Regency>> call, Response<List<Regency>> response) {
+                Spinner spinner;
                 if(isSelf){
                     regencies = response.body();
+                    spinner = regencySpinner;
                 }else{
                     regenciesCompany = response.body();
+                    spinner = companyRegencySpinner;
                 }
                 final List<Regency> reg = response.body();
 
@@ -188,25 +191,22 @@ public class MainActivity extends AppCompatActivity {
 
                 ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, regencyArray);
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                if(isSelf)
-                    regencySpinner.setAdapter(adapter);
-                else
-                    companyRegencySpinner.setAdapter(adapter);
-//
-//                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//                    @Override
-//                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-//                        if(!(i-1 < 0)) {
-//                            Regency regency = reg.get(i-1);
-//                            getDistricts(regency.getId(), isSelf);
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void onNothingSelected(AdapterView<?> adapterView) {
-//
-//                    }
-//                });
+                spinner.setAdapter(adapter);
+
+                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                        if(!(i-1 < 0)) {
+                            Regency regency = reg.get(i-1);
+                            getDistricts(regency.getId(), isSelf);
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> adapterView) {
+
+                    }
+                });
             }
 
             @Override
@@ -248,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                         if(!(i-1 < 0)) {
                             District district = dis.get(i-1);
-                            Log.e("self "+isSelf, district.getId()+" - "+district.getName());
+                            getVillages(district.getId(), isSelf);
                         }
                     }
 
@@ -266,12 +266,54 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void getRegions(char type, int id, final boolean isSelf){
+    public void getVillages(int idDistrict, final boolean isSelf){
+        TmdbService tmdbService =
+                TmdbClient.getClient().create(TmdbService.class);
+        Call<List<Village>> villageCall = tmdbService.getVillages(idDistrict);
+        villageCall.enqueue(new Callback<List<Village>>() {
+            @Override
+            public void onResponse(Call<List<Village>> call, Response<List<Village>> response) {
+                Spinner spinner;
+                if(isSelf){
+                    villages = response.body();
+                    spinner = regencySpinner;
+                }else{
+                    villagesCompany = response.body();
+                    spinner = companyRegencySpinner;
+                }
+                final List<Village> vil = response.body();
 
-    }
+                String[] districtArray = new String[vil.size()+1];
+                districtArray[0] = "Pilih Kelurahan:";
+                for(int i = 1; i <= vil.size(); i++){
+                    districtArray[i] = vil.get(i-1).getName();
+                }
 
-    private void populateSpinner(char type, Spinner spinner){
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, districtArray);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinner.setAdapter(adapter);
 
+                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                        if(!(i-1 < 0)) {
+                            Village village = vil.get(i-1);
+                            Log.e("self "+isSelf, village.getId()+" - "+village.getName());
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> adapterView) {
+
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Call<List<Village>> call, Throwable t) {
+
+            }
+        });
     }
 
     private void initiateCaptcha(){

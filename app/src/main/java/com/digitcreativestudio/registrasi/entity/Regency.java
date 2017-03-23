@@ -12,6 +12,14 @@ public class Regency extends Region {
     @SerializedName("nama_kabupaten")
     protected String name;
 
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
     @SerializedName("province_id")
     private int provinceId;
 

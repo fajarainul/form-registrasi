@@ -12,6 +12,14 @@ public class Village extends Region {
     @SerializedName("nama_kelurahan")
     protected String name;
 
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
     @SerializedName("district_id")
     private int districtId;
 

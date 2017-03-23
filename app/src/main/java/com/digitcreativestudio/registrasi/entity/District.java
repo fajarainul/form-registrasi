@@ -12,6 +12,14 @@ public class District extends Region {
     @SerializedName("nama_kecamatan")
     protected String name;
 
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
     @SerializedName("regency_id")
     private int regencyId;
 
