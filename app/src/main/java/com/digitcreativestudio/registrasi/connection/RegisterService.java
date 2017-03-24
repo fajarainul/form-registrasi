@@ -1,6 +1,8 @@
 package com.digitcreativestudio.registrasi.connection;
 
 import com.digitcreativestudio.registrasi.entity.District;
+import com.digitcreativestudio.registrasi.entity.License;
+import com.digitcreativestudio.registrasi.entity.LicenseRegion;
 import com.digitcreativestudio.registrasi.entity.Province;
 import com.digitcreativestudio.registrasi.entity.Regency;
 import com.digitcreativestudio.registrasi.entity.SubmitResponse;
@@ -8,12 +10,15 @@ import com.digitcreativestudio.registrasi.entity.Village;
 
 import java.util.List;
 
+import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.Headers;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
 import retrofit2.http.Query;
 
 /**
@@ -36,6 +41,15 @@ public interface RegisterService {
     @GET("get_kelurahan.php")
     Call<List<Village>> getVillages(@Query("id") int idDistrict);
 
+    @Headers("Content-Type: application/json")
+    @GET("get_kelurahan.php")
+    Call<List<License>> getLicenses();
+
+    @Headers("Content-Type: application/json")
+    @GET("get_kelurahan.php")
+    Call<List<LicenseRegion>> getLicenseRegions();
+
+    @Multipart
     @FormUrlEncoded
     @POST("register.php")
     Call<SubmitResponse> submit(@Field("jenis_identitas") String type,
@@ -43,6 +57,7 @@ public interface RegisterService {
                                 @Field("nama_pemohon") String name,
                                 @Field("telp_pemohon") String phone,
                                 @Field("alamat_pemohon") String address,
+
                                 @Field("id_provinsi") String provinceId,
                                 @Field("nama_provinsi") String provinceName,
                                 @Field("id_kabupaten") String regencyId,
@@ -51,11 +66,13 @@ public interface RegisterService {
                                 @Field("nama_kecamatan") String districtName,
                                 @Field("id_kelurahan") String villageId,
                                 @Field("nama_kelurahan") String villageName,
+
                                 @Field("npwp") String npwp,
                                 @Field("no_register") String noCompany,
                                 @Field("nama_perusahaan") String companyName,
                                 @Field("alamat_perusahaan") String companyAddress,
                                 @Field("telp_perusahaan") String companyPhone,
+
                                 @Field("id_provinsi_perusahaan") String companyProvinceId,
                                 @Field("nama_provinsi_perusahaan") String companyProvinceName,
                                 @Field("id_kabupaten_perusahaan") String companyRegencyId,
@@ -63,5 +80,14 @@ public interface RegisterService {
                                 @Field("id_kecamatan_perusahaan") String companyDistrictId,
                                 @Field("nama_kecamatan_perusahaan") String companyDistrictName,
                                 @Field("id_kelurahan_perusahaan") String companyVillageId,
-                                @Field("nama_kelurahan_perusahaan") String companyVillageName);
+                                @Field("nama_kelurahan_perusahaan") String companyVillageName,
+
+                                @Field("id_izin") String licenseId,
+                                @Field("nama_izin") String licenseName,
+                                @Field("id_unit_kerja") String licenseRegionId,
+                                @Field("nama_unit_kerja") String licenseRegionName,
+
+                                @Field("nama_lampiran") String attachmentName,
+                                @Field("lampiran") String attachment);
+
 }

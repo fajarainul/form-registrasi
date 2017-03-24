@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -23,11 +24,15 @@ import com.digitcreativestudio.registrasi.CAPTCHA.MathCaptcha;
 import com.digitcreativestudio.registrasi.connection.RegisterClient;
 import com.digitcreativestudio.registrasi.connection.RegisterService;
 import com.digitcreativestudio.registrasi.entity.District;
+import com.digitcreativestudio.registrasi.entity.License;
+import com.digitcreativestudio.registrasi.entity.LicenseRegion;
 import com.digitcreativestudio.registrasi.entity.Province;
 import com.digitcreativestudio.registrasi.entity.Regency;
 import com.digitcreativestudio.registrasi.entity.SubmitResponse;
 import com.digitcreativestudio.registrasi.entity.Village;
+import com.digitcreativestudio.registrasi.utils.IOUtil;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
     List<District> districtsCompany = new ArrayList<>();
     List<Village> villages = new ArrayList<>();
     List<Village> villagesCompany = new ArrayList<>();
+    List<License> licenses = new ArrayList<>();
+    List<LicenseRegion> licenseRegions = new ArrayList<>();
 
     Map<String, String> input = new HashMap<>();
     @Override
@@ -415,21 +422,6 @@ public class MainActivity extends AppCompatActivity {
                 ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, districtArray);
                 adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 spinner.setAdapter(adapter);
-
-                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                        if(!(i-1 < 0)) {
-                            Village village = vil.get(i-1);
-                            Log.e("self "+isSelf, village.getId()+" - "+village.getName());
-                        }
-                    }
-
-                    @Override
-                    public void onNothingSelected(AdapterView<?> adapterView) {
-
-                    }
-                });
             }
 
             @Override
@@ -440,15 +432,91 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getLicenses(){
-        String[] provinceArray = new String[1];
+//        RegisterService registerService =
+//                RegisterClient.getClient().create(RegisterService.class);
+//        Call<List<License>> licenseCall = registerService.getLicenses();
+//        licenseCall.enqueue(new Callback<List<License>>() {
+//            @Override
+//            public void onResponse(Call<List<License>> call, Response<List<License>> response) {
+//                licenses = response.body();
+//
+//                String[] licenseArray = new String[licenses.size()+1];
+//                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+//                    licenseArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+//                } else {
+//                    licenseArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:").toString();
+//                }
+//
+//                for(int i = 1; i <= licenses.size(); i++){
+//                    licenseArray[i] = licenses.get(i-1).getName();
+//                }
+//
+//                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, licenseArray);
+//                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//                licenseSpinner.setAdapter(adapter);
+//
+//                licenseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//                    @Override
+//                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+//                        if(!(i-1 < 0)) {
+//                            License license = licenses.get(i-1);
+//                            getLicenseRegions(license.getId());
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onNothingSelected(AdapterView<?> adapterView) {
+//
+//                    }
+//                });
+//            }
+//
+//            @Override
+//            public void onFailure(Call<List<License>> call, Throwable t) {
+//
+//            }
+//        });
+        String[] licenseArray = new String[1];
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            provinceArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+            licenseArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
         }else {
-            provinceArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:").toString();
+            licenseArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:").toString();
         }
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, provinceArray);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, licenseArray);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         licenseSpinner.setAdapter(adapter);
+    }
+
+    private void getLicenseRegions(int licenseId){
+//        RegisterService registerService =
+//                RegisterClient.getClient().create(RegisterService.class);
+//        Call<List<LicenseRegion>> licenseCall = registerService.getLicenseRegions();
+//        licenseCall.enqueue(new Callback<List<LicenseRegion>>() {
+//            @Override
+//            public void onResponse(Call<List<LicenseRegion>> call, Response<List<LicenseRegion>> response) {
+//                licenseRegions = response.body();
+//
+//                String[] licenseRegionArray = new String[licenses.size()+1];
+//                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+//                    licenseRegionArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+//                } else {
+//                    licenseRegionArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:").toString();
+//                }
+//
+//                for(int i = 1; i <= licenseRegions.size(); i++){
+//                    licenseRegionArray[i] = licenseRegions.get(i-1).getName();
+//                }
+//
+//                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, licenseRegionArray);
+//                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//                licenseRegionSpinner.setAdapter(adapter);
+//            }
+//
+//            @Override
+//            public void onFailure(Call<List<LicenseRegion>> call, Throwable t) {
+//
+//            }
+//        });
     }
 
     private void initiateCaptcha(){
@@ -486,13 +554,13 @@ public class MainActivity extends AppCompatActivity {
                     String path = "";
                     try{
                         path = getPath(this, uri);
+                        byte[] bytes = IOUtil.readFile(path);
+                        byte[] base64 = Base64.decode(bytes, Base64.DEFAULT);
+                    }catch (IOException ie){
+                        ie.printStackTrace();
                     }catch (URISyntaxException use){
                         use.printStackTrace();
                     }
-                    Log.d("PATH", "File Path: " + path);
-                    // Get the file instance
-                    // File file = new File(path);
-                    // Initiate the upload
                 }
                 break;
         }
@@ -546,6 +614,8 @@ public class MainActivity extends AppCompatActivity {
             initiateCaptcha();
             return;
         }
+
+        initiateCaptcha();
         submit();
     }
 
@@ -554,17 +624,24 @@ public class MainActivity extends AppCompatActivity {
         Regency regency = regencies.get(regencySpinner.getSelectedItemPosition()-1);
         District district = districts.get(districtSpinner.getSelectedItemPosition()-1);
         Village village = villages.get(villageSpinner.getSelectedItemPosition()-1);
+
         Province companyProvince = provincesCompany.get(companyProvinceSpinner.getSelectedItemPosition()-1);
         Regency companyRegency = regenciesCompany.get(companyRegencySpinner.getSelectedItemPosition()-1);
         District companyDistrict = districtsCompany.get(companyDistrictSpinner.getSelectedItemPosition()-1);
         Village companyVillage = villagesCompany.get(companyVillageSpinner.getSelectedItemPosition()-1);
+
+        License license = licenses.get(licenseSpinner.getSelectedItemPosition()-1);
+        LicenseRegion licenseRegion = licenseRegions.get(licenseRegionSpinner.getSelectedItemPosition()-1);
+
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
-        Call<SubmitResponse> call = registerService.submit(mIdTypes.get(idTypeSpinner.getSelectedItemPosition()),
+        Call<SubmitResponse> call = registerService.submit(
+                mIdTypes.get(idTypeSpinner.getSelectedItemPosition()),
                 idEditText.getText().toString(),
                 nameEditText.getText().toString(),
                 phoneEditText.getText().toString(),
                 addressEditText.getText().toString(),
+
                 String.valueOf(province.getId()),
                 province.getName(),
                 String.valueOf(regency.getId()),
@@ -573,11 +650,13 @@ public class MainActivity extends AppCompatActivity {
                 district.getName(),
                 String.valueOf(village.getId()),
                 village.getName(),
+
                 companyNpwpEditText.getText().toString(),
                 companyNoEditText.getText().toString(),
                 companyNameEditText.getText().toString(),
                 companyAddressEditText.getText().toString(),
                 companyPhoneEditText.getText().toString(),
+
                 String.valueOf(companyProvince.getId()),
                 companyProvince.getName(),
                 String.valueOf(companyRegency.getId()),
@@ -585,7 +664,16 @@ public class MainActivity extends AppCompatActivity {
                 String.valueOf(companyDistrict.getId()),
                 companyDistrict.getName(),
                 String.valueOf(companyVillage.getId()),
-                companyVillage.getName());
+                companyVillage.getName(),
+
+                String.valueOf(license.getId()),
+                license.getName(),
+                String.valueOf(licenseRegion.getId()),
+                licenseRegion.getName(),
+
+                ".pdf",
+                "Base64");
+
         call.enqueue(new Callback<SubmitResponse>() {
             @Override
             public void onResponse(Call<SubmitResponse> call, Response<SubmitResponse> response) {
