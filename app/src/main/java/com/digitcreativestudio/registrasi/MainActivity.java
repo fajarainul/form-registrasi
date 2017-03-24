@@ -1,13 +1,12 @@
 package com.digitcreativestudio.registrasi;
 
-import android.content.Context;
+import android.annotation.TargetApi;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
-import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -30,10 +29,9 @@ import com.digitcreativestudio.registrasi.entity.Province;
 import com.digitcreativestudio.registrasi.entity.Regency;
 import com.digitcreativestudio.registrasi.entity.SubmitResponse;
 import com.digitcreativestudio.registrasi.entity.Village;
-import com.digitcreativestudio.registrasi.utils.IOUtil;
+import com.digitcreativestudio.registrasi.utils.FileUtil;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,11 +72,35 @@ public class MainActivity extends AppCompatActivity {
     List<License> licenses = new ArrayList<>();
     List<LicenseRegion> licenseRegions = new ArrayList<>();
 
+    String attachmentPath = "";
+    String attachmentBase64;
+    Uri attachmentUri;
+    File attachment;
+
     Map<String, String> input = new HashMap<>();
+
+    protected boolean shouldAskPermissions() {
+        return (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1);
+    }
+
+    @TargetApi(23)
+    protected void askPermissions() {
+        String[] permissions = {
+                "android.permission.READ_EXTERNAL_STORAGE",
+                "android.permission.WRITE_EXTERNAL_STORAGE"
+        };
+        int requestCode = 200;
+        requestPermissions(permissions, requestCode);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if (shouldAskPermissions()) {
+            askPermissions();
+        }
 
         idEditText = (EditText) findViewById(R.id.id_edittext);
         nameEditText = (EditText) findViewById(R.id.name_edittext);
@@ -129,8 +151,8 @@ public class MainActivity extends AppCompatActivity {
         initiateCaptcha();
         getIdType();
 
-        getProvinces(true);
-        getProvinces(false);
+//        getProvinces(true);
+//        getProvinces(false);
 
         getLicenses();
     }
@@ -547,46 +569,14 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case FILE_SELECT_CODE:
                 if (resultCode == RESULT_OK) {
-                    // Get the Uri of the selected file
-                    Uri uri = data.getData();
-                    Log.d("PATH", "File Uri: " + uri.toString());
-                    // Get the path
-                    String path = "";
-                    try{
-                        path = getPath(this, uri);
-                        byte[] bytes = IOUtil.readFile(path);
-                        byte[] base64 = Base64.decode(bytes, Base64.DEFAULT);
-                    }catch (IOException ie){
-                        ie.printStackTrace();
-                    }catch (URISyntaxException use){
-                        use.printStackTrace();
-                    }
+                    attachmentUri = data.getData();
+                    attachmentPath = FileUtil.getPath(this, attachmentUri);
+                    attachment = new File(attachmentPath);
+                    attachmentBase64 = FileUtil.convertFileToByteArray(attachment);
                 }
                 break;
         }
         super.onActivityResult(requestCode, resultCode, data);
-    }
-
-    private static String getPath(Context context, Uri uri) throws URISyntaxException {
-        if ("content".equalsIgnoreCase(uri.getScheme())) {
-            String[] projection = { "_data" };
-            Cursor cursor = null;
-
-            try {
-                cursor = context.getContentResolver().query(uri, projection, null, null, null);
-                int column_index = cursor.getColumnIndexOrThrow("_data");
-                if (cursor.moveToFirst()) {
-                    return cursor.getString(column_index);
-                }
-            } catch (Exception e) {
-                // Eat it
-            }
-        }
-        else if ("file".equalsIgnoreCase(uri.getScheme())) {
-            return uri.getPath();
-        }
-
-        return null;
     }
 
     private void validate(){
@@ -671,8 +661,8 @@ public class MainActivity extends AppCompatActivity {
                 String.valueOf(licenseRegion.getId()),
                 licenseRegion.getName(),
 
-                ".pdf",
-                "Base64");
+                attachment.getName(),
+                attachmentBase64);
 
         call.enqueue(new Callback<SubmitResponse>() {
             @Override
