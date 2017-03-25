@@ -1,7 +1,10 @@
 package com.digitcreativestudio.registrasi;
 
 import android.annotation.TargetApi;
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,6 +19,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.digitcreativestudio.registrasi.CAPTCHA.Captcha;
@@ -33,9 +37,7 @@ import com.digitcreativestudio.registrasi.utils.FileUtil;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -58,26 +60,44 @@ public class MainActivity extends AppCompatActivity {
     EditText captchaEditText;
 
     Button attachButton;
+    TextView atachTextView;
     Button saveButton;
 
     List<String> mIdTypes = new ArrayList<>();
     List<Province> provinces = new ArrayList<>();
-    List<Province> provincesCompany = new ArrayList<>();
     List<Regency> regencies = new ArrayList<>();
-    List<Regency> regenciesCompany = new ArrayList<>();
     List<District> districts = new ArrayList<>();
-    List<District> districtsCompany = new ArrayList<>();
     List<Village> villages = new ArrayList<>();
+
+    List<Province> provincesCompany = new ArrayList<>();
+    List<Regency> regenciesCompany = new ArrayList<>();
+    List<District> districtsCompany = new ArrayList<>();
     List<Village> villagesCompany = new ArrayList<>();
+
     List<License> licenses = new ArrayList<>();
     List<LicenseRegion> licenseRegions = new ArrayList<>();
 
+    ArrayAdapter<String> mIdTypesAdapter;
+    ArrayAdapter<String> provincesAdapter;
+    ArrayAdapter<String> regenciesAdapter;
+    ArrayAdapter<String> districtsAdapter;
+    ArrayAdapter<String> villagesAdapter;
+
+    ArrayAdapter<String> provincesCompanyAdapter;
+    ArrayAdapter<String> regenciesCompanyAdapter;
+    ArrayAdapter<String> districtsCompanyAdapter;
+    ArrayAdapter<String> villagesCompanyAdapter;
+
+    ArrayAdapter<String> licensesAdapter;
+    ArrayAdapter<String> licenseRegionsAdapter;
+
     String attachmentPath = "";
-    String attachmentBase64;
+    String attachmentBase64 = "";
     Uri attachmentUri;
     File attachment;
 
-    Map<String, String> input = new HashMap<>();
+    ProgressDialog progDialog;
+    List<String> processes;
 
     protected boolean shouldAskPermissions() {
         return (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1);
@@ -97,6 +117,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        processes = new ArrayList<>();
+        progDialog = new ProgressDialog(this);
+        progDialog.setIndeterminate(true);
+        progDialog.setCancelable(false);
 
         if (shouldAskPermissions()) {
             askPermissions();
@@ -134,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 showFileChooser();
             }
         });
+        atachTextView = (TextView) findViewById(R.id.attachment_textview);
 
         captchaImageView = (ImageView) findViewById(R.id.captcha_imageview);
         captchaEditText = (EditText) findViewById(R.id.captcha_edittext);
@@ -151,74 +177,97 @@ public class MainActivity extends AppCompatActivity {
         initiateCaptcha();
         getIdType();
 
-//        getProvinces(true);
-//        getProvinces(false);
+        getProvinces(true);
+        getProvinces(false);
 
         getLicenses();
     }
 
     private void initiate(){
-        String[] defaultRegency = new String[1];
-        String[] defaultDistrict = new String[1];
-        String[] defaultVillage = new String[1];
-        String[] defaultLicenseRegion = new String[1];
+        String[] provincesArray = new String[1];
+        String[] regenciesArray = new String[1];
+        String[] districtsArray = new String[1];
+        String[] villagesArray = new String[1];
+        String[] licensesArray = new String[1];
+        String[] licenseRegionsArray = new String[1];
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
             idEditText.setHint(Html.fromHtml("ID Pemohon<sup>*</sup>", Html.FROM_HTML_MODE_LEGACY).toString());
             nameEditText.setHint(Html.fromHtml("Nama Pemohon<sup>*</sup>", Html.FROM_HTML_MODE_LEGACY).toString());
             phoneEditText.setHint(Html.fromHtml("Telp Pemohon<sup>*</sup>", Html.FROM_HTML_MODE_LEGACY).toString());
             addressEditText.setHint(Html.fromHtml("Alamat Pemohon<sup>*</sup>", Html.FROM_HTML_MODE_LEGACY).toString());
 
-            defaultRegency[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-            defaultDistrict[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-            defaultVillage[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-            defaultLicenseRegion[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+            captchaEditText.setHint(Html.fromHtml("<sup>*</sup>", Html.FROM_HTML_MODE_LEGACY).toString());
+
+            provincesArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+            regenciesArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+            districtsArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+            villagesArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+
+            licensesArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+            licenseRegionsArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
         } else {
             idEditText.setHint(Html.fromHtml("ID Pemohon<sup>*</sup>").toString());
             nameEditText.setHint(Html.fromHtml("Nama Pemohon<sup>*</sup>").toString());
             phoneEditText.setHint(Html.fromHtml("Telp Pemohon<sup>*</sup>").toString());
             addressEditText.setHint(Html.fromHtml("Alamat Pemohon<sup>*</sup>").toString());
 
-            defaultRegency[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:").toString();
-            defaultDistrict[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:").toString();
-            defaultVillage[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:").toString();
-            defaultLicenseRegion[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:").toString();
+            captchaEditText.setHint(Html.fromHtml("<sup>*</sup>").toString());
+
+            provincesArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:").toString();
+            regenciesArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:").toString();
+            districtsArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:").toString();
+            villagesArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:").toString();
+
+            licensesArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:").toString();
+            licenseRegionsArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:").toString();
 
             attachButton.setText(Html.fromHtml("Pilih Lampiran<sup>*</sup>...").toString());
         }
 
-        ArrayAdapter<String> adapterRegency = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultRegency);
-        adapterRegency.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        regencySpinner.setAdapter(adapterRegency);
+        populateSpinner(provinceSpinner, provincesAdapter, provincesArray);
+        populateSpinner(regencySpinner, regenciesAdapter, regenciesArray);
+        populateSpinner(districtSpinner, districtsAdapter, districtsArray);
+        populateSpinner(villageSpinner, villagesAdapter, villagesArray);
 
-        String[] defaultRegencyCompany = new String[1];
-        defaultRegencyCompany[0] = "Pilih Kabupaten:";
-        ArrayAdapter<String> adapterRegencyCompany = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultRegencyCompany);
-        adapterRegency.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        companyRegencySpinner.setAdapter(adapterRegencyCompany);
+        String[] provincesCompanyArray = new String[1];
+        provincesCompanyArray[0] = "Pilih Provinsi:";
+        String[] regenciesCompanyArray = new String[1];
+        regenciesCompanyArray[0] = "Pilih Kabupaten:";
+        String[] districtsCompanyArray = new String[1];
+        districtsCompanyArray[0] = "Pilih Kecamatan:";
+        String[] villagesCompanyArray = new String[1];
+        villagesCompanyArray[0] = "Pilih Kelurahan:";
+        populateSpinner(companyProvinceSpinner, provincesCompanyAdapter, provincesCompanyArray);
+        populateSpinner(companyRegencySpinner, regenciesCompanyAdapter, regenciesCompanyArray);
+        populateSpinner(companyDistrictSpinner, districtsCompanyAdapter, districtsCompanyArray);
+        populateSpinner(companyVillageSpinner, villagesCompanyAdapter, villagesCompanyArray);
 
-        ArrayAdapter<String> adapterDistrict = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultDistrict);
-        adapterDistrict.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        districtSpinner.setAdapter(adapterDistrict);
+        populateSpinner(licenseSpinner, licensesAdapter, licensesArray);
+        populateSpinner(licenseRegionSpinner, licenseRegionsAdapter, licenseRegionsArray);
 
-        String[] defaultDistrictCompany = new String[1];
-        defaultDistrictCompany[0] = "Pilih Kecamatan:";
-        ArrayAdapter<String> adapterDistrictCompany = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultDistrictCompany);
-        adapterRegency.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        companyDistrictSpinner.setAdapter(adapterDistrictCompany);
+        findViewById(R.id.main_layout).requestFocus();
+    }
 
-        ArrayAdapter<String> adapterVillage = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultVillage);
-        adapterVillage.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        villageSpinner.setAdapter(adapterVillage);
+    private void populateSpinner(Spinner spinner, ArrayAdapter<String> arrayAdapter, String[] strings){
+        arrayAdapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, strings);
+        arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(arrayAdapter);
+    }
 
-        String[] defaultVillageCompany = new String[1];
-        defaultVillageCompany[0] = "Pilih Kelurahan:";
-        ArrayAdapter<String> adapterVillageCompany = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultVillageCompany);
-        adapterRegency.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        companyVillageSpinner.setAdapter(adapterVillageCompany);
+    private void showProgressBar(String process){
+        this.processes.add(process);
+        if(!progDialog.isShowing()) {
+            progDialog.show();
+            progDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            progDialog.setContentView(R.layout.progress_bar);
+        }
+    }
 
-        ArrayAdapter<String> adapterLicenseRegion = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, defaultLicenseRegion);
-        adapterLicenseRegion.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        licenseRegionSpinner.setAdapter(adapterLicenseRegion);
+    private void dismissProgressBar(String process){
+        this.processes.remove(process);
+        if(this.processes.size() == 0 && progDialog.isShowing()){
+            progDialog.dismiss();
+        }
     }
 
     private void getIdType(){
@@ -237,39 +286,47 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getProvinces(final boolean isSelf){
+        final String process = "provinces";
+        showProgressBar(process);
+
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
         Call<List<Province>> provinceCall = registerService.getProvinces();
         provinceCall.enqueue(new Callback<List<Province>>() {
             @Override
             public void onResponse(Call<List<Province>> call, Response<List<Province>> response) {
+                dismissProgressBar(process);
+
                 Spinner spinner;
+                String[] provArray;
+                ArrayAdapter<String> adapter;
                 if(isSelf){
                     provinces = response.body();
                     spinner = provinceSpinner;
+                    adapter = provincesAdapter;
                 }else{
                     provincesCompany = response.body();
                     spinner = companyProvinceSpinner;
+                    adapter = provincesCompanyAdapter;
                 }
                 final List<Province> prov = response.body();
 
-                String[] provinceArray = new String[prov.size()+1];
+                provArray = new String[prov.size()+1];
                 if(isSelf) {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                        provinceArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                        provArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
                     } else {
-                        provinceArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:").toString();
+                        provArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:").toString();
                     }
                 }else{
-                    provinceArray[0] = "Pilih Provinsi:";
+                    provArray[0] = "Pilih Provinsi:";
                 }
                 for(int i = 1; i <= prov.size(); i++){
-                    provinceArray[i] = prov.get(i-1).getName();
+                    provArray[i] = prov.get(i-1).getName();
                 }
 
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, provinceArray);
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinner.setAdapter(adapter);
+
+                populateSpinner(spinner, adapter, provArray);
 
                 spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
@@ -289,45 +346,52 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<List<Province>> call, Throwable t) {
-
+                dismissProgressBar(process);
             }
         });
     }
 
     private void getRegencies(int idProvince, final boolean isSelf){
+        final String process = "regencies";
+        showProgressBar(process);
+
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
         Call<List<Regency>> regencyCall = registerService.getRegencies(idProvince);
         regencyCall.enqueue(new Callback<List<Regency>>() {
             @Override
             public void onResponse(Call<List<Regency>> call, Response<List<Regency>> response) {
+                dismissProgressBar(process);
+
                 Spinner spinner;
+                ArrayAdapter<String> adapter;
+                String[] regArray;
                 if(isSelf){
                     regencies = response.body();
                     spinner = regencySpinner;
+                    adapter =  regenciesAdapter;
                 }else{
                     regenciesCompany = response.body();
                     spinner = companyRegencySpinner;
+                    adapter =  regenciesCompanyAdapter;
                 }
                 final List<Regency> reg = response.body();
 
-                String[] regencyArray = new String[reg.size()+1];
+                regArray = new String[reg.size()+1];
                 if(isSelf) {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                        regencyArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                        regArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
                     } else {
-                        regencyArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:").toString();
+                        regArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:").toString();
                     }
                 }else{
-                    regencyArray[0] = "Pilih Kabupaten:";
+                    regArray[0] = "Pilih Kabupaten:";
                 }
                 for(int i = 1; i <= reg.size(); i++){
-                    regencyArray[i] = reg.get(i-1).getName();
+                    regArray[i] = reg.get(i-1).getName();
                 }
 
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, regencyArray);
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinner.setAdapter(adapter);
+                populateSpinner(spinner, adapter, regArray);
 
                 spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
@@ -347,45 +411,52 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<List<Regency>> call, Throwable t) {
-
+                dismissProgressBar(process);
             }
         });
     }
 
     public void getDistricts(int idRegency, final boolean isSelf){
+        final String process = "districts";
+        showProgressBar(process);
+
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
         Call<List<District>> districtCall = registerService.getDistricts(idRegency);
         districtCall.enqueue(new Callback<List<District>>() {
             @Override
             public void onResponse(Call<List<District>> call, Response<List<District>> response) {
+                dismissProgressBar(process);
+
                 Spinner spinner;
+                ArrayAdapter<String> adapter;
+                String[] disArray;
                 if(isSelf){
                     districts = response.body();
                     spinner = districtSpinner;
+                    adapter = districtsAdapter;
                 }else{
                     districtsCompany = response.body();
                     spinner = companyDistrictSpinner;
+                    adapter = districtsCompanyAdapter;
                 }
                 final List<District> dis = response.body();
 
-                String[] districtArray = new String[dis.size()+1];
+                disArray = new String[dis.size()+1];
                 if(isSelf) {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                        districtArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                        disArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
                     } else {
-                        districtArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:").toString();
+                        disArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:").toString();
                     }
                 }else{
-                    districtArray[0] = "Pilih Kecamatan:";
+                    disArray[0] = "Pilih Kecamatan:";
                 }
                 for(int i = 1; i <= dis.size(); i++){
-                    districtArray[i] = dis.get(i-1).getName();
+                    disArray[i] = dis.get(i-1).getName();
                 }
 
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, districtArray);
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinner.setAdapter(adapter);
+                populateSpinner(spinner, adapter, disArray);
 
                 spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
@@ -405,140 +476,144 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<List<District>> call, Throwable t) {
-
+                dismissProgressBar(process);
             }
         });
     }
 
     public void getVillages(int idDistrict, final boolean isSelf){
+        final String process = "villages";
+        showProgressBar(process);
+
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
         Call<List<Village>> villageCall = registerService.getVillages(idDistrict);
         villageCall.enqueue(new Callback<List<Village>>() {
             @Override
             public void onResponse(Call<List<Village>> call, Response<List<Village>> response) {
+                dismissProgressBar(process);
+
                 Spinner spinner;
+                ArrayAdapter<String> adapter;
+                String[] vilArray;
                 if(isSelf){
                     villages = response.body();
                     spinner = villageSpinner;
+                    adapter = villagesAdapter;
                 }else{
                     villagesCompany = response.body();
                     spinner = companyVillageSpinner;
+                    adapter = villagesCompanyAdapter;
                 }
                 final List<Village> vil = response.body();
 
-                String[] districtArray = new String[vil.size()+1];
+                vilArray = new String[vil.size()+1];
                 if(isSelf) {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                        districtArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                        vilArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
                     } else {
-                        districtArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:").toString();
+                        vilArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:").toString();
                     }
                 }else{
-                    districtArray[0] = "Pilih Kelurahan:";
+                    vilArray[0] = "Pilih Kelurahan:";
                 }
                 for(int i = 1; i <= vil.size(); i++){
-                    districtArray[i] = vil.get(i-1).getName();
+                    vilArray[i] = vil.get(i-1).getName();
                 }
 
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, districtArray);
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinner.setAdapter(adapter);
+                populateSpinner(spinner, adapter, vilArray);
             }
 
             @Override
             public void onFailure(Call<List<Village>> call, Throwable t) {
-
+                dismissProgressBar(process);
             }
         });
     }
 
     private void getLicenses(){
-//        RegisterService registerService =
-//                RegisterClient.getClient().create(RegisterService.class);
-//        Call<List<License>> licenseCall = registerService.getLicenses();
-//        licenseCall.enqueue(new Callback<List<License>>() {
-//            @Override
-//            public void onResponse(Call<List<License>> call, Response<List<License>> response) {
-//                licenses = response.body();
-//
-//                String[] licenseArray = new String[licenses.size()+1];
-//                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-//                    licenseArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-//                } else {
-//                    licenseArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:").toString();
-//                }
-//
-//                for(int i = 1; i <= licenses.size(); i++){
-//                    licenseArray[i] = licenses.get(i-1).getName();
-//                }
-//
-//                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, licenseArray);
-//                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//                licenseSpinner.setAdapter(adapter);
-//
-//                licenseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//                    @Override
-//                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-//                        if(!(i-1 < 0)) {
-//                            License license = licenses.get(i-1);
-//                            getLicenseRegions(license.getId());
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void onNothingSelected(AdapterView<?> adapterView) {
-//
-//                    }
-//                });
-//            }
-//
-//            @Override
-//            public void onFailure(Call<List<License>> call, Throwable t) {
-//
-//            }
-//        });
-        String[] licenseArray = new String[1];
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            licenseArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-        }else {
-            licenseArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:").toString();
-        }
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, licenseArray);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        licenseSpinner.setAdapter(adapter);
+        final String process = "licenses";
+        showProgressBar(process);
+
+        RegisterService registerService =
+                RegisterClient.getClient().create(RegisterService.class);
+        Call<List<License>> licenseCall = registerService.getLicenses();
+        licenseCall.enqueue(new Callback<List<License>>() {
+            @Override
+            public void onResponse(Call<List<License>> call, Response<List<License>> response) {
+                dismissProgressBar(process);
+
+                licenses = response.body();
+
+                String[] licensesArray = new String[licenses.size()+1];
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    licensesArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                } else {
+                    licensesArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:").toString();
+                }
+
+                for(int i = 1; i <= licenses.size(); i++){
+                    licensesArray[i] = licenses.get(i-1).getName();
+                }
+
+                populateSpinner(licenseSpinner, licensesAdapter, licensesArray);
+
+                licenseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                        if(!(i-1 < 0)) {
+                            License license = licenses.get(i-1);
+                            getLicenseRegions(license.getId());
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> adapterView) {
+
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Call<List<License>> call, Throwable t) {
+                dismissProgressBar(process);
+            }
+        });
     }
 
     private void getLicenseRegions(int licenseId){
-//        RegisterService registerService =
-//                RegisterClient.getClient().create(RegisterService.class);
-//        Call<List<LicenseRegion>> licenseCall = registerService.getLicenseRegions();
-//        licenseCall.enqueue(new Callback<List<LicenseRegion>>() {
-//            @Override
-//            public void onResponse(Call<List<LicenseRegion>> call, Response<List<LicenseRegion>> response) {
-//                licenseRegions = response.body();
-//
-//                String[] licenseRegionArray = new String[licenses.size()+1];
-//                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-//                    licenseRegionArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-//                } else {
-//                    licenseRegionArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:").toString();
-//                }
-//
-//                for(int i = 1; i <= licenseRegions.size(); i++){
-//                    licenseRegionArray[i] = licenseRegions.get(i-1).getName();
-//                }
-//
-//                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, licenseRegionArray);
-//                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//                licenseRegionSpinner.setAdapter(adapter);
-//            }
-//
-//            @Override
-//            public void onFailure(Call<List<LicenseRegion>> call, Throwable t) {
-//
-//            }
-//        });
+        final String process = "license_regions";
+        showProgressBar(process);
+
+        RegisterService registerService =
+                RegisterClient.getClient().create(RegisterService.class);
+        Call<List<LicenseRegion>> licenseCall = registerService.getLicenseRegions(licenseId);
+        licenseCall.enqueue(new Callback<List<LicenseRegion>>() {
+            @Override
+            public void onResponse(Call<List<LicenseRegion>> call, Response<List<LicenseRegion>> response) {
+                dismissProgressBar(process);
+
+                licenseRegions = response.body();
+
+                String[] licenseRegionsArray = new String[licenses.size()+1];
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    licenseRegionsArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                } else {
+                    licenseRegionsArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:").toString();
+                }
+
+                for(int i = 1; i <= licenseRegions.size(); i++){
+                    licenseRegionsArray[i] = licenseRegions.get(i-1).getName();
+                }
+
+                populateSpinner(licenseRegionSpinner, licenseRegionsAdapter, licenseRegionsArray);
+            }
+
+            @Override
+            public void onFailure(Call<List<LicenseRegion>> call, Throwable t) {
+                dismissProgressBar(process);
+            }
+        });
     }
 
     private void initiateCaptcha(){
@@ -572,6 +647,7 @@ public class MainActivity extends AppCompatActivity {
                     attachmentUri = data.getData();
                     attachmentPath = FileUtil.getPath(this, attachmentUri);
                     attachment = new File(attachmentPath);
+                    atachTextView.setText(attachment.getName());
                     attachmentBase64 = FileUtil.convertFileToByteArray(attachment);
                 }
                 break;
@@ -604,12 +680,21 @@ public class MainActivity extends AppCompatActivity {
             initiateCaptcha();
             return;
         }
+        if(attachmentBase64.equals("")){
+            Toast.makeText(MainActivity.this, "Silahkan pilih file lampiran terlebih dahulu.", Toast.LENGTH_LONG).show();
+
+            initiateCaptcha();
+            return;
+        }
 
         initiateCaptcha();
         submit();
     }
 
     private void submit(){
+        final String process = "submit";
+        showProgressBar(process);
+
         Province province = provinces.get(provinceSpinner.getSelectedItemPosition()-1);
         Regency regency = regencies.get(regencySpinner.getSelectedItemPosition()-1);
         District district = districts.get(districtSpinner.getSelectedItemPosition()-1);
@@ -667,12 +752,14 @@ public class MainActivity extends AppCompatActivity {
         call.enqueue(new Callback<SubmitResponse>() {
             @Override
             public void onResponse(Call<SubmitResponse> call, Response<SubmitResponse> response) {
+                dismissProgressBar(process);
+
                 Toast.makeText(MainActivity.this, "Berhasil Disimpan.", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onFailure(Call<SubmitResponse> call, Throwable t) {
-
+                dismissProgressBar(process);
             }
         });
     }

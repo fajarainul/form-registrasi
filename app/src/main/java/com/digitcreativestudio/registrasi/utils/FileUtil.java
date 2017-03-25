@@ -10,7 +10,6 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Base64;
-import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -121,8 +120,6 @@ public class FileUtil {
             }
 
             byteArray = bos.toByteArray();
-
-            Log.e("Byte array", ">" + byteArray);
 
         } catch (IOException e) {
             e.printStackTrace();

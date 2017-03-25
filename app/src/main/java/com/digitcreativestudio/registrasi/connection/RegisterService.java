@@ -44,7 +44,7 @@ public interface RegisterService {
 
     @Headers("Content-Type: application/json")
     @GET("get_kelurahan.php")
-    Call<List<LicenseRegion>> getLicenseRegions();
+    Call<List<LicenseRegion>> getLicenseRegions(@Query("id") int idLicense);
 
     @FormUrlEncoded
     @POST("register.php")
