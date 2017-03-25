@@ -2,12 +2,14 @@ package com.digitcreativestudio.registrasi;
 
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.util.Log;
@@ -98,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
 
     ProgressDialog progDialog;
     List<String> processes;
+    AlertDialog alertDialog;
 
     protected boolean shouldAskPermissions() {
         return (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1);
@@ -118,14 +121,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (shouldAskPermissions()) {
+            askPermissions();
+        }
+
         processes = new ArrayList<>();
         progDialog = new ProgressDialog(this);
         progDialog.setIndeterminate(true);
         progDialog.setCancelable(false);
-
-        if (shouldAskPermissions()) {
-            askPermissions();
-        }
 
         idEditText = (EditText) findViewById(R.id.id_edittext);
         nameEditText = (EditText) findViewById(R.id.name_edittext);
@@ -270,6 +273,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void showAlert(String title, String message, String positiveButton, DialogInterface.OnClickListener listener){
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage(title);
+        alertDialogBuilder.setTitle(message);
+        alertDialogBuilder.setPositiveButton(positiveButton, listener);
+        alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+    }
+
     private void getIdType(){
         mIdTypes = new ArrayList<>();
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
@@ -325,7 +337,6 @@ public class MainActivity extends AppCompatActivity {
                     provArray[i] = prov.get(i-1).getName();
                 }
 
-
                 populateSpinner(spinner, adapter, provArray);
 
                 spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -347,6 +358,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<Province>> call, Throwable t) {
                 dismissProgressBar(process);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
             }
         });
     }
@@ -412,6 +424,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<Regency>> call, Throwable t) {
                 dismissProgressBar(process);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
             }
         });
     }
@@ -477,6 +490,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<District>> call, Throwable t) {
                 dismissProgressBar(process);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
             }
         });
     }
@@ -527,6 +541,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<Village>> call, Throwable t) {
                 dismissProgressBar(process);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
             }
         });
     }
@@ -577,6 +592,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<License>> call, Throwable t) {
                 dismissProgressBar(process);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
             }
         });
     }
@@ -612,6 +628,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<LicenseRegion>> call, Throwable t) {
                 dismissProgressBar(process);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
             }
         });
     }
@@ -668,7 +685,8 @@ public class MainActivity extends AppCompatActivity {
             (villageSpinner.getSelectedItemPosition()-1) < 0 ||
             (licenseSpinner.getSelectedItemPosition()-1) < 0 ||
             (licenseRegionSpinner.getSelectedItemPosition()-1) < 0)){
-            Toast.makeText(MainActivity.this, "Harap isi semua data yang bertanda bintang (*).", Toast.LENGTH_LONG).show();
+
+            showAlert("Gagal", "Form dengan tanda (*) wajib diisi.", "OK", null);
 
             initiateCaptcha();
             return;
@@ -677,11 +695,13 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "CAPTCHA gagal. Silahkan coba kembali.", Toast.LENGTH_LONG).show();
             captchaEditText.setText("");
 
+            showAlert("Gagal", "CAPTCHA tidak sesuai. Silahkan coba kembali.", "OK", null);
+
             initiateCaptcha();
             return;
         }
         if(attachmentBase64.equals("")){
-            Toast.makeText(MainActivity.this, "Silahkan pilih file lampiran terlebih dahulu.", Toast.LENGTH_LONG).show();
+            showAlert("Gagal", "Silahkan pilih file lampiran terlebih dahulu.", "OK", null);
 
             initiateCaptcha();
             return;
@@ -760,6 +780,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<SubmitResponse> call, Throwable t) {
                 dismissProgressBar(process);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
             }
         });
     }
