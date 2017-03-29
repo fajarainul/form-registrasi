@@ -12,6 +12,11 @@ public class License {
     @SerializedName("nama_perizinan")
     protected String name;
 
+    public License() {
+        this.id = 0;
+        this.name = "";
+    }
+
     public int getId() {
         return id;
     }

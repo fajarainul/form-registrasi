@@ -12,6 +12,11 @@ public class District {
     @SerializedName("nama_kecamatan")
     protected String name;
 
+    public District() {
+        this.id = 0;
+        this.name = "";
+    }
+
     public int getId() {
         return id;
     }

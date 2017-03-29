@@ -12,6 +12,11 @@ public class Regency {
     @SerializedName("nama_kabupaten")
     protected String name;
 
+    public Regency() {
+        this.id = 0;
+        this.name = "";
+    }
+
     public int getId() {
         return id;
     }

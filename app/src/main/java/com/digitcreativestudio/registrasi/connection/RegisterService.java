@@ -81,7 +81,7 @@ public interface RegisterService {
                                 @Field("unit_kerja_id") String licenseRegionId,
                                 @Field("unit_kerja_text") String licenseRegionName,
 
-                                @Field("nama_lampiran") String attachmentName,
-                                @Field("lampiran") String attachment);
+                                @Field("filename") String attachmentName,
+                                @Field("file") String attachment);
 
 }

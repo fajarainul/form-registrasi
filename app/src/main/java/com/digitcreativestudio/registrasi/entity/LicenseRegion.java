@@ -12,6 +12,11 @@ public class LicenseRegion {
     @SerializedName("nama_unit_kerja")
     protected String name;
 
+    public LicenseRegion() {
+        this.id = 0;
+        this.name = "";
+    }
+
     public int getId() {
         return id;
     }

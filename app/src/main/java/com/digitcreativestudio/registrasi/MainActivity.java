@@ -178,6 +178,8 @@ public class MainActivity extends AppCompatActivity {
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                saveButton.setText("Menyimpan...");
+                showProgressBar("submit");
                 validate();
             }
         });
@@ -215,6 +217,8 @@ public class MainActivity extends AppCompatActivity {
 
             licensesArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
             licenseRegionsArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+
+            attachButton.setText(Html.fromHtml("Pilih Lampiran<sup>*</sup> (max: 2Mb)", Html.FROM_HTML_MODE_LEGACY).toString());
         } else {
             idEditText.setHint(Html.fromHtml("ID Pemohon<sup>*</sup>").toString());
             nameEditText.setHint(Html.fromHtml("Nama Pemohon<sup>*</sup>").toString());
@@ -231,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
             licensesArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:").toString();
             licenseRegionsArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:").toString();
 
-            attachButton.setText(Html.fromHtml("Pilih Lampiran<sup>*</sup>...").toString());
+            attachButton.setText(Html.fromHtml("Pilih Lampiran<sup>*</sup> (max: 2Mb)").toString());
         }
 
         populateSpinner(provinceSpinner, provincesAdapter, provincesArray);
@@ -274,6 +278,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void dismissProgressBar(String process){
+        saveButton.setText("Simpan");
         this.processes.remove(process);
         if(this.processes.size() == 0 && progDialog.isShowing()){
             progDialog.dismiss();
@@ -693,7 +698,6 @@ public class MainActivity extends AppCompatActivity {
         final String process = "license_regions";
         showProgressBar(process);
 
-        Log.e("id", licenseId+"");
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
         Call<LicenseRegionResponse> licenseCall = registerService.getLicenseRegions(String.valueOf(licenseId));
@@ -770,8 +774,19 @@ public class MainActivity extends AppCompatActivity {
                     attachmentUri = data.getData();
                     attachmentPath = FileUtil.getPath(this, attachmentUri);
                     attachment = new File(attachmentPath);
-                    atachTextView.setText(attachment.getName());
-                    attachmentBase64 = FileUtil.convertFileToByteArray(attachment);
+                    if((attachment.length() / 1024 / 1024) > 2){
+                        attachmentUri = null;
+                        attachmentPath = "";
+                        attachment = null;
+                        atachTextView.setText("");
+                        attachmentBase64 = "";
+
+                        showAlert("Gagal", "Ukuran file tidak boleh lebih dari 2Mb.", "OK", null);
+                    }else{
+                        atachTextView.setText(attachment.getName());
+                        attachmentBase64 = FileUtil.convertFileToByteArray(attachment);
+                        Log.e("base64", attachmentBase64);
+                    }
                 }
                 break;
         }
@@ -795,18 +810,21 @@ public class MainActivity extends AppCompatActivity {
             showAlert("Gagal", "Form dengan tanda (*) wajib diisi.", "OK", null);
 
             initiateCaptcha();
+            dismissProgressBar("submit");
             return;
         }
         if(!captcha.checkAnswer(captchaEditText.getText().toString())){
             showAlert("Gagal", "CAPTCHA tidak sesuai. Silahkan coba kembali.", "OK", null);
 
             initiateCaptcha();
+            dismissProgressBar("submit");
             return;
         }
         if(attachmentBase64.equals("")){
             showAlert("Gagal", "Silahkan pilih file lampiran terlebih dahulu.", "OK", null);
 
             initiateCaptcha();
+            dismissProgressBar("submit");
             return;
         }
 
@@ -816,21 +834,41 @@ public class MainActivity extends AppCompatActivity {
 
     private void submit(){
         final String process = "submit";
-        showProgressBar(process);
 
         Province province = provinces.get(provinceSpinner.getSelectedItemPosition()-1);
         Regency regency = regencies.get(regencySpinner.getSelectedItemPosition()-1);
         District district = districts.get(districtSpinner.getSelectedItemPosition()-1);
         Village village = villages.get(villageSpinner.getSelectedItemPosition()-1);
 
-        Province companyProvince = provincesCompany.get(companyProvinceSpinner.getSelectedItemPosition()-1);
-        Regency companyRegency = regenciesCompany.get(companyRegencySpinner.getSelectedItemPosition()-1);
-        District companyDistrict = districtsCompany.get(companyDistrictSpinner.getSelectedItemPosition()-1);
-        Village companyVillage = villagesCompany.get(companyVillageSpinner.getSelectedItemPosition()-1);
+        Province companyProvince = new Province ();
+        if(companyProvinceSpinner.getSelectedItemPosition() > 0){
+            provincesCompany.get(companyProvinceSpinner.getSelectedItemPosition()-1);
+        }
+        Regency companyRegency = new Regency ();
+        if(companyRegencySpinner.getSelectedItemPosition() > 0){
+            regenciesCompany.get(companyRegencySpinner.getSelectedItemPosition()-1);
+        }
+        District companyDistrict = new District ();
+        if(companyDistrictSpinner.getSelectedItemPosition() > 0){
+            districtsCompany.get(companyDistrictSpinner.getSelectedItemPosition()-1);
+        }
+        Village companyVillage = new Village ();
+        if(companyVillageSpinner.getSelectedItemPosition() > 0){
+            villagesCompany.get(companyVillageSpinner.getSelectedItemPosition()-1);
+        }
 
         License license = licenses.get(licenseSpinner.getSelectedItemPosition()-1);
         LicenseRegion licenseRegion = licenseRegions.get(licenseRegionSpinner.getSelectedItemPosition()-1);
 
+        String[] filenameArray = attachment.getName().split("\\.");
+        String extension = filenameArray[filenameArray.length-1];
+        filenameArray[filenameArray.length-1] = "";
+        StringBuilder stringBuilder = new StringBuilder();
+        for(String filename : filenameArray){
+            stringBuilder.append(filename).append(".");
+        }
+        stringBuilder.append("-").append(System.currentTimeMillis()/1000).append(".").append(extension);
+        String filename = stringBuilder.toString();
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
         Call<SubmitResponse> call = registerService.submit(
@@ -855,13 +893,13 @@ public class MainActivity extends AppCompatActivity {
                 companyAddressEditText.getText().toString(),
                 companyPhoneEditText.getText().toString(),
 
-                String.valueOf(companyProvince.getId()),
+                String.valueOf(companyProvince.getId() > 0 ? companyProvince.getId() : ""),
                 companyProvince.getName(),
-                String.valueOf(companyRegency.getId()),
+                String.valueOf(companyRegency.getId() > 0 ? companyRegency.getId() : ""),
                 companyRegency.getName(),
-                String.valueOf(companyDistrict.getId()),
+                String.valueOf(companyDistrict.getId() > 0 ? companyDistrict.getId() : ""),
                 companyDistrict.getName(),
-                String.valueOf(companyVillage.getId()),
+                String.valueOf(companyVillage.getId() > 0 ? companyVillage.getId() : ""),
                 companyVillage.getName(),
 
                 String.valueOf(license.getId()),
@@ -869,7 +907,7 @@ public class MainActivity extends AppCompatActivity {
                 String.valueOf(licenseRegion.getId()),
                 licenseRegion.getName(),
 
-                attachment.getName(),
+                filename,
                 attachmentBase64);
 
         call.enqueue(new Callback<SubmitResponse>() {
@@ -878,7 +916,7 @@ public class MainActivity extends AppCompatActivity {
                 dismissProgressBar(process);
 
                 if(response.body().isSuccess()){
-                    Toast.makeText(MainActivity.this, "Berhasil Disimpan.", Toast.LENGTH_SHORT).show();
+                    showAlert("Berhasil", "Data berhasil disimpan", "OK", null);
                 }else{
                     showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
                 }

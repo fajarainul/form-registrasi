@@ -12,6 +12,11 @@ public class Village {
     @SerializedName("nama_kelurahan")
     protected String name;
 
+    public Village() {
+        this.id = 0;
+        this.name = "";
+    }
+
     public int getId() {
         return id;
     }

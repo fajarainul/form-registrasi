@@ -36,6 +36,7 @@
             android:id="@+id/id_edittext"
             android:layout_width="match_parent"
             android:hint="ID Pemohon"
+            android:inputType="number"
             style="@style/style_edittext"/>
 
         <EditText
@@ -95,12 +96,14 @@
             android:id="@+id/company_npwp_edittext"
             android:layout_width="match_parent"
             android:hint="NPWP Perusahaan"
+            android:inputType="number"
             style="@style/style_edittext"/>
 
         <EditText
             android:id="@+id/company_no_edittext"
             android:layout_width="match_parent"
             android:hint="No Register Perusahaan"
+            android:inputType="number"
             style="@style/style_edittext"/>
 
         <EditText
@@ -212,6 +215,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:hint=""
+                android:inputType="number"
                 style="@style/style_edittext"/>
         </LinearLayout>
 
