@@ -179,7 +179,10 @@
                 android:id="@+id/attachment_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pilih Lampiran..."/>
+                android:paddingLeft="25px"
+                android:paddingRight="25px"
+                android:text="Pilih Lampiran..."
+                style="@style/style_button"/>
             <TextView
                 android:id="@+id/attachment_textview"
                 android:layout_width="0dp"
@@ -216,8 +219,11 @@
             android:id="@+id/save_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:gravity="center"
-            android:text="Simpan"/>
+            android:text="Simpan"
+            android:background="@color/colorPrimary"
+            android:textColor="@android:color/white"/>
     </LinearLayout>
 
 
