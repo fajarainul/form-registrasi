@@ -33,8 +33,14 @@ import com.digitcreativestudio.registrasi.entity.License;
 import com.digitcreativestudio.registrasi.entity.LicenseRegion;
 import com.digitcreativestudio.registrasi.entity.Province;
 import com.digitcreativestudio.registrasi.entity.Regency;
-import com.digitcreativestudio.registrasi.entity.SubmitResponse;
 import com.digitcreativestudio.registrasi.entity.Village;
+import com.digitcreativestudio.registrasi.response.DistrictResponse;
+import com.digitcreativestudio.registrasi.response.LicenseRegionResponse;
+import com.digitcreativestudio.registrasi.response.LicenseResponse;
+import com.digitcreativestudio.registrasi.response.ProvinceResponse;
+import com.digitcreativestudio.registrasi.response.RegencyResponse;
+import com.digitcreativestudio.registrasi.response.SubmitResponse;
+import com.digitcreativestudio.registrasi.response.VillageResponse;
 import com.digitcreativestudio.registrasi.utils.FileUtil;
 
 import java.io.File;
@@ -129,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
         progDialog = new ProgressDialog(this);
         progDialog.setIndeterminate(true);
         progDialog.setCancelable(false);
+        alertDialog = new AlertDialog.Builder(this).create();
 
         idEditText = (EditText) findViewById(R.id.id_edittext);
         nameEditText = (EditText) findViewById(R.id.name_edittext);
@@ -274,12 +281,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showAlert(String title, String message, String positiveButton, DialogInterface.OnClickListener listener){
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setMessage(title);
-        alertDialogBuilder.setTitle(message);
-        alertDialogBuilder.setPositiveButton(positiveButton, listener);
-        alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
+        if(!alertDialog.isShowing()) {
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setMessage(message);
+            alertDialogBuilder.setTitle(title);
+            alertDialogBuilder.setPositiveButton(positiveButton, listener);
+            alertDialogBuilder.setCancelable(false);
+            alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+        }
     }
 
     private void getIdType(){
@@ -303,62 +313,82 @@ public class MainActivity extends AppCompatActivity {
 
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
-        Call<List<Province>> provinceCall = registerService.getProvinces();
-        provinceCall.enqueue(new Callback<List<Province>>() {
+        Call<ProvinceResponse> provinceCall = registerService.getProvinces();
+        provinceCall.enqueue(new Callback<ProvinceResponse>() {
             @Override
-            public void onResponse(Call<List<Province>> call, Response<List<Province>> response) {
+            public void onResponse(Call<ProvinceResponse> call, Response<ProvinceResponse> response) {
                 dismissProgressBar(process);
 
-                Spinner spinner;
-                String[] provArray;
-                ArrayAdapter<String> adapter;
-                if(isSelf){
-                    provinces = response.body();
-                    spinner = provinceSpinner;
-                    adapter = provincesAdapter;
-                }else{
-                    provincesCompany = response.body();
-                    spinner = companyProvinceSpinner;
-                    adapter = provincesCompanyAdapter;
-                }
-                final List<Province> prov = response.body();
-
-                provArray = new String[prov.size()+1];
-                if(isSelf) {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                        provArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-                    } else {
-                        provArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:").toString();
+                if(response.body().isSuccess()){
+                    Spinner spinner;
+                    String[] provArray;
+                    ArrayAdapter<String> adapter;
+                    if(isSelf){
+                        provinces = response.body().getResult();
+                        spinner = provinceSpinner;
+                        adapter = provincesAdapter;
+                    }else{
+                        provincesCompany = response.body().getResult();
+                        spinner = companyProvinceSpinner;
+                        adapter = provincesCompanyAdapter;
                     }
-                }else{
-                    provArray[0] = "Pilih Provinsi:";
-                }
-                for(int i = 1; i <= prov.size(); i++){
-                    provArray[i] = prov.get(i-1).getName();
-                }
+                    final List<Province> prov = response.body().getResult();
 
-                populateSpinner(spinner, adapter, provArray);
-
-                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                        if(!(i-1 < 0)) {
-                            Province province = prov.get(i-1);
-                            getRegencies(province.getId(), isSelf);
+                    provArray = new String[prov.size()+1];
+                    if(isSelf) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                            provArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                        } else {
+                            provArray[0] = Html.fromHtml("Pilih Provinsi<sup>*</sup>:").toString();
                         }
+                    }else{
+                        provArray[0] = "Pilih Provinsi:";
+                    }
+                    for(int i = 1; i <= prov.size(); i++){
+                        provArray[i] = prov.get(i-1).getName();
                     }
 
-                    @Override
-                    public void onNothingSelected(AdapterView<?> adapterView) {
+                    populateSpinner(spinner, adapter, provArray);
 
-                    }
-                });
+                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                            if(isSelf){
+                                regencySpinner.setSelection(0);
+                                districtSpinner.setSelection(0);
+                                villageSpinner.setSelection(0);
+                            }else{
+                                companyRegencySpinner.setSelection(0);
+                                companyDistrictSpinner.setSelection(0);
+                                companyVillageSpinner.setSelection(0);
+                            }
+                            if(!(i-1 < 0)) {
+                                Province province = prov.get(i-1);
+                                getRegencies(province.getId(), isSelf);
+                            }
+                        }
+
+                        @Override
+                        public void onNothingSelected(AdapterView<?> adapterView) {
+
+                        }
+                    });
+                }else{
+                    showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
+                }
             }
 
             @Override
-            public void onFailure(Call<List<Province>> call, Throwable t) {
+            public void onFailure(Call<ProvinceResponse> call, Throwable t) {
                 dismissProgressBar(process);
-                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "Coba Lagi", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent i = getIntent();
+                        finish();
+                        startActivity(i);
+                    }
+                });
             }
         });
     }
@@ -369,62 +399,82 @@ public class MainActivity extends AppCompatActivity {
 
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
-        Call<List<Regency>> regencyCall = registerService.getRegencies(idProvince);
-        regencyCall.enqueue(new Callback<List<Regency>>() {
+        Call<RegencyResponse> regencyCall = registerService.getRegencies(String.valueOf(idProvince));
+        regencyCall.enqueue(new Callback<RegencyResponse>() {
             @Override
-            public void onResponse(Call<List<Regency>> call, Response<List<Regency>> response) {
+            public void onResponse(Call<RegencyResponse> call, Response<RegencyResponse> response) {
                 dismissProgressBar(process);
 
-                Spinner spinner;
-                ArrayAdapter<String> adapter;
-                String[] regArray;
-                if(isSelf){
-                    regencies = response.body();
-                    spinner = regencySpinner;
-                    adapter =  regenciesAdapter;
-                }else{
-                    regenciesCompany = response.body();
-                    spinner = companyRegencySpinner;
-                    adapter =  regenciesCompanyAdapter;
-                }
-                final List<Regency> reg = response.body();
-
-                regArray = new String[reg.size()+1];
-                if(isSelf) {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                        regArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-                    } else {
-                        regArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:").toString();
+                if(response.body().isSuccess()){
+                    Spinner spinner;
+                    ArrayAdapter<String> adapter;
+                    String[] regArray;
+                    if(isSelf){
+                        regencies = response.body().getResult();
+                        spinner = regencySpinner;
+                        adapter =  regenciesAdapter;
+                    }else{
+                        regenciesCompany = response.body().getResult();
+                        spinner = companyRegencySpinner;
+                        adapter =  regenciesCompanyAdapter;
                     }
-                }else{
-                    regArray[0] = "Pilih Kabupaten:";
-                }
-                for(int i = 1; i <= reg.size(); i++){
-                    regArray[i] = reg.get(i-1).getName();
-                }
+                    final List<Regency> reg = response.body().getResult();
 
-                populateSpinner(spinner, adapter, regArray);
-
-                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                        if(!(i-1 < 0)) {
-                            Regency regency = reg.get(i-1);
-                            getDistricts(regency.getId(), isSelf);
+                    regArray = new String[reg.size()+1];
+                    if(isSelf) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                            regArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                        } else {
+                            regArray[0] = Html.fromHtml("Pilih Kabupaten<sup>*</sup>:").toString();
                         }
+                    }else{
+                        regArray[0] = "Pilih Kabupaten:";
+                    }
+                    for(int i = 1; i <= reg.size(); i++){
+                        regArray[i] = reg.get(i-1).getName();
                     }
 
-                    @Override
-                    public void onNothingSelected(AdapterView<?> adapterView) {
+                    populateSpinner(spinner, adapter, regArray);
 
-                    }
-                });
+                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                            if(isSelf){
+                                districtSpinner.setSelection(0);
+                                villageSpinner.setSelection(0);
+                            }else{
+                                companyDistrictSpinner.setSelection(0);
+                                companyVillageSpinner.setSelection(0);
+                            }
+                            if(!(i-1 < 0)) {
+                                Regency regency = reg.get(i-1);
+                                getDistricts(regency.getId(), isSelf);
+                            }
+                        }
+
+                        @Override
+                        public void onNothingSelected(AdapterView<?> adapterView) {
+
+                        }
+                    });
+                }else{
+                    showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
+                }
             }
 
             @Override
-            public void onFailure(Call<List<Regency>> call, Throwable t) {
+            public void onFailure(Call<RegencyResponse> call, Throwable t) {
                 dismissProgressBar(process);
-                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(isSelf){
+                            provinceSpinner.setSelection(0);
+                        }else{
+                            companyProvinceSpinner.setSelection(0);
+                        }
+                    }
+                });
             }
         });
     }
@@ -435,62 +485,80 @@ public class MainActivity extends AppCompatActivity {
 
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
-        Call<List<District>> districtCall = registerService.getDistricts(idRegency);
-        districtCall.enqueue(new Callback<List<District>>() {
+        Call<DistrictResponse> districtCall = registerService.getDistricts(String.valueOf(idRegency));
+        districtCall.enqueue(new Callback<DistrictResponse>() {
             @Override
-            public void onResponse(Call<List<District>> call, Response<List<District>> response) {
+            public void onResponse(Call<DistrictResponse> call, Response<DistrictResponse> response) {
                 dismissProgressBar(process);
 
-                Spinner spinner;
-                ArrayAdapter<String> adapter;
-                String[] disArray;
-                if(isSelf){
-                    districts = response.body();
-                    spinner = districtSpinner;
-                    adapter = districtsAdapter;
-                }else{
-                    districtsCompany = response.body();
-                    spinner = companyDistrictSpinner;
-                    adapter = districtsCompanyAdapter;
-                }
-                final List<District> dis = response.body();
-
-                disArray = new String[dis.size()+1];
-                if(isSelf) {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                        disArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-                    } else {
-                        disArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:").toString();
+                if(response.body().isSuccess()){
+                    Spinner spinner;
+                    ArrayAdapter<String> adapter;
+                    String[] disArray;
+                    if(isSelf){
+                        districts = response.body().getResult();
+                        spinner = districtSpinner;
+                        adapter = districtsAdapter;
+                    }else{
+                        districtsCompany = response.body().getResult();
+                        spinner = companyDistrictSpinner;
+                        adapter = districtsCompanyAdapter;
                     }
-                }else{
-                    disArray[0] = "Pilih Kecamatan:";
-                }
-                for(int i = 1; i <= dis.size(); i++){
-                    disArray[i] = dis.get(i-1).getName();
-                }
+                    final List<District> dis = response.body().getResult();
 
-                populateSpinner(spinner, adapter, disArray);
-
-                spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                        if(!(i-1 < 0)) {
-                            District district = dis.get(i-1);
-                            getVillages(district.getId(), isSelf);
+                    disArray = new String[dis.size()+1];
+                    if(isSelf) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                            disArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                        } else {
+                            disArray[0] = Html.fromHtml("Pilih Kecamatan<sup>*</sup>:").toString();
                         }
+                    }else{
+                        disArray[0] = "Pilih Kecamatan:";
+                    }
+                    for(int i = 1; i <= dis.size(); i++){
+                        disArray[i] = dis.get(i-1).getName();
                     }
 
-                    @Override
-                    public void onNothingSelected(AdapterView<?> adapterView) {
+                    populateSpinner(spinner, adapter, disArray);
 
-                    }
-                });
+                    spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                            if(isSelf){
+                                villageSpinner.setSelection(0);
+                            }else{
+                                companyVillageSpinner.setSelection(0);
+                            }
+                            if(!(i-1 < 0)) {
+                                District district = dis.get(i-1);
+                                getVillages(district.getId(), isSelf);
+                            }
+                        }
+
+                        @Override
+                        public void onNothingSelected(AdapterView<?> adapterView) {
+
+                        }
+                    });
+                }else{
+                    showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
+                }
             }
 
             @Override
-            public void onFailure(Call<List<District>> call, Throwable t) {
+            public void onFailure(Call<DistrictResponse> call, Throwable t) {
                 dismissProgressBar(process);
-                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(isSelf){
+                            regencySpinner.setSelection(0);
+                        }else{
+                            companyRegencySpinner.setSelection(0);
+                        }
+                    }
+                });
             }
         });
     }
@@ -501,47 +569,60 @@ public class MainActivity extends AppCompatActivity {
 
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
-        Call<List<Village>> villageCall = registerService.getVillages(idDistrict);
-        villageCall.enqueue(new Callback<List<Village>>() {
+        Call<VillageResponse> villageCall = registerService.getVillages(String.valueOf(idDistrict));
+        villageCall.enqueue(new Callback<VillageResponse>() {
             @Override
-            public void onResponse(Call<List<Village>> call, Response<List<Village>> response) {
+            public void onResponse(Call<VillageResponse> call, Response<VillageResponse> response) {
                 dismissProgressBar(process);
 
-                Spinner spinner;
-                ArrayAdapter<String> adapter;
-                String[] vilArray;
-                if(isSelf){
-                    villages = response.body();
-                    spinner = villageSpinner;
-                    adapter = villagesAdapter;
-                }else{
-                    villagesCompany = response.body();
-                    spinner = companyVillageSpinner;
-                    adapter = villagesCompanyAdapter;
-                }
-                final List<Village> vil = response.body();
-
-                vilArray = new String[vil.size()+1];
-                if(isSelf) {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                        vilArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-                    } else {
-                        vilArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:").toString();
+                if(response.body().isSuccess()){
+                    Spinner spinner;
+                    ArrayAdapter<String> adapter;
+                    String[] vilArray;
+                    if(isSelf){
+                        villages = response.body().getResult();
+                        spinner = villageSpinner;
+                        adapter = villagesAdapter;
+                    }else{
+                        villagesCompany = response.body().getResult();
+                        spinner = companyVillageSpinner;
+                        adapter = villagesCompanyAdapter;
                     }
-                }else{
-                    vilArray[0] = "Pilih Kelurahan:";
-                }
-                for(int i = 1; i <= vil.size(); i++){
-                    vilArray[i] = vil.get(i-1).getName();
-                }
+                    final List<Village> vil = response.body().getResult();
 
-                populateSpinner(spinner, adapter, vilArray);
+                    vilArray = new String[vil.size()+1];
+                    if(isSelf) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                            vilArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                        } else {
+                            vilArray[0] = Html.fromHtml("Pilih Kelurahan<sup>*</sup>:").toString();
+                        }
+                    }else{
+                        vilArray[0] = "Pilih Kelurahan:";
+                    }
+                    for(int i = 1; i <= vil.size(); i++){
+                        vilArray[i] = vil.get(i-1).getName();
+                    }
+
+                    populateSpinner(spinner, adapter, vilArray);
+                }else{
+                    showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
+                }
             }
 
             @Override
-            public void onFailure(Call<List<Village>> call, Throwable t) {
+            public void onFailure(Call<VillageResponse> call, Throwable t) {
                 dismissProgressBar(process);
-                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(isSelf){
+                            districtSpinner.setSelection(0);
+                        }else{
+                            companyDistrictSpinner.setSelection(0);
+                        }
+                    }
+                });
             }
         });
     }
@@ -552,47 +633,58 @@ public class MainActivity extends AppCompatActivity {
 
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
-        Call<List<License>> licenseCall = registerService.getLicenses();
-        licenseCall.enqueue(new Callback<List<License>>() {
+        Call<LicenseResponse> licenseCall = registerService.getLicenses();
+        licenseCall.enqueue(new Callback<LicenseResponse>() {
             @Override
-            public void onResponse(Call<List<License>> call, Response<List<License>> response) {
+            public void onResponse(Call<LicenseResponse> call, Response<LicenseResponse> response) {
                 dismissProgressBar(process);
 
-                licenses = response.body();
+                if(response.body().isSuccess()){
+                    licenses = response.body().getResult();
 
-                String[] licensesArray = new String[licenses.size()+1];
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                    licensesArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-                } else {
-                    licensesArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:").toString();
-                }
+                    String[] licensesArray = new String[licenses.size()+1];
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        licensesArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                    } else {
+                        licensesArray[0] = Html.fromHtml("Pilih Izin<sup>*</sup>:").toString();
+                    }
 
-                for(int i = 1; i <= licenses.size(); i++){
-                    licensesArray[i] = licenses.get(i-1).getName();
-                }
+                    for(int i = 1; i <= licenses.size(); i++){
+                        licensesArray[i] = licenses.get(i-1).getName();
+                    }
 
-                populateSpinner(licenseSpinner, licensesAdapter, licensesArray);
+                    populateSpinner(licenseSpinner, licensesAdapter, licensesArray);
 
-                licenseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                    @Override
-                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                        if(!(i-1 < 0)) {
-                            License license = licenses.get(i-1);
-                            getLicenseRegions(license.getId());
+                    licenseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                            if(!(i-1 < 0)) {
+                                License license = licenses.get(i-1);
+                                getLicenseRegions(license.getId());
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onNothingSelected(AdapterView<?> adapterView) {
+                        @Override
+                        public void onNothingSelected(AdapterView<?> adapterView) {
 
-                    }
-                });
+                        }
+                    });
+                }else{
+                    showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
+                }
             }
 
             @Override
-            public void onFailure(Call<List<License>> call, Throwable t) {
+            public void onFailure(Call<LicenseResponse> call, Throwable t) {
                 dismissProgressBar(process);
-                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "Coba Lagi", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent i = getIntent();
+                        finish();
+                        startActivity(i);
+                    }
+                });
             }
         });
     }
@@ -601,39 +693,53 @@ public class MainActivity extends AppCompatActivity {
         final String process = "license_regions";
         showProgressBar(process);
 
+        Log.e("id", licenseId+"");
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
-        Call<List<LicenseRegion>> licenseCall = registerService.getLicenseRegions(licenseId);
-        licenseCall.enqueue(new Callback<List<LicenseRegion>>() {
+        Call<LicenseRegionResponse> licenseCall = registerService.getLicenseRegions(String.valueOf(licenseId));
+        licenseCall.enqueue(new Callback<LicenseRegionResponse>() {
             @Override
-            public void onResponse(Call<List<LicenseRegion>> call, Response<List<LicenseRegion>> response) {
+            public void onResponse(Call<LicenseRegionResponse> call, Response<LicenseRegionResponse> response) {
                 dismissProgressBar(process);
 
-                licenseRegions = response.body();
+                if(response.body().isSuccess()){
+                    licenseRegions = response.body().getResult();
+                    for(LicenseRegion lr : licenseRegions){
+                        Log.e(lr.getId()+"", lr.getName());
+                    }
 
-                String[] licenseRegionsArray = new String[licenses.size()+1];
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                    licenseRegionsArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
-                } else {
-                    licenseRegionsArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:").toString();
+                    String[] licenseRegionsArray = new String[licenseRegions.size()+1];
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        licenseRegionsArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:", Html.FROM_HTML_MODE_LEGACY).toString();
+                    } else {
+                        licenseRegionsArray[0] = Html.fromHtml("Pilih Unit Kerja<sup>*</sup>:").toString();
+                    }
+
+                    for (int i = 1; i <= licenseRegions.size(); i++) {
+                        licenseRegionsArray[i] = licenseRegions.get(i - 1).getName();
+                    }
+
+                    populateSpinner(licenseRegionSpinner, licenseRegionsAdapter, licenseRegionsArray);
+                }else{
+                    showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
                 }
-
-                for(int i = 1; i <= licenseRegions.size(); i++){
-                    licenseRegionsArray[i] = licenseRegions.get(i-1).getName();
-                }
-
-                populateSpinner(licenseRegionSpinner, licenseRegionsAdapter, licenseRegionsArray);
             }
 
             @Override
-            public void onFailure(Call<List<LicenseRegion>> call, Throwable t) {
+            public void onFailure(Call<LicenseRegionResponse> call, Throwable t) {
                 dismissProgressBar(process);
-                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
+                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        licenseSpinner.setSelection(0);
+                    }
+                });
             }
         });
     }
 
     private void initiateCaptcha(){
+        captchaEditText.setText("");
         captcha = new MathCaptcha(300, 100, MathCaptcha.MathOptions.PLUS_MINUS_MULTIPLY);
 //        Captcha c = new TextCaptcha(300, 100, 5, TextCaptcha.TextOptions.NUMBERS_AND_LETTERS);
         captchaImageView.setImageBitmap(captcha.getImage());
@@ -692,9 +798,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         if(!captcha.checkAnswer(captchaEditText.getText().toString())){
-            Toast.makeText(MainActivity.this, "CAPTCHA gagal. Silahkan coba kembali.", Toast.LENGTH_LONG).show();
-            captchaEditText.setText("");
-
             showAlert("Gagal", "CAPTCHA tidak sesuai. Silahkan coba kembali.", "OK", null);
 
             initiateCaptcha();
@@ -774,7 +877,11 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<SubmitResponse> call, Response<SubmitResponse> response) {
                 dismissProgressBar(process);
 
-                Toast.makeText(MainActivity.this, "Berhasil Disimpan.", Toast.LENGTH_SHORT).show();
+                if(response.body().isSuccess()){
+                    Toast.makeText(MainActivity.this, "Berhasil Disimpan.", Toast.LENGTH_SHORT).show();
+                }else{
+                    showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
+                }
             }
 
             @Override

@@ -7,9 +7,9 @@ import com.google.gson.annotations.SerializedName;
  */
 
 public class License {
-    @SerializedName("id_izin")
+    @SerializedName("id_perizinan")
     protected int id;
-    @SerializedName("nama_izin")
+    @SerializedName("nama_perizinan")
     protected String name;
 
     public int getId() {

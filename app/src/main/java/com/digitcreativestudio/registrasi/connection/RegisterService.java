@@ -1,14 +1,12 @@
 package com.digitcreativestudio.registrasi.connection;
 
-import com.digitcreativestudio.registrasi.entity.District;
-import com.digitcreativestudio.registrasi.entity.License;
-import com.digitcreativestudio.registrasi.entity.LicenseRegion;
-import com.digitcreativestudio.registrasi.entity.Province;
-import com.digitcreativestudio.registrasi.entity.Regency;
-import com.digitcreativestudio.registrasi.entity.SubmitResponse;
-import com.digitcreativestudio.registrasi.entity.Village;
-
-import java.util.List;
+import com.digitcreativestudio.registrasi.response.DistrictResponse;
+import com.digitcreativestudio.registrasi.response.LicenseRegionResponse;
+import com.digitcreativestudio.registrasi.response.LicenseResponse;
+import com.digitcreativestudio.registrasi.response.ProvinceResponse;
+import com.digitcreativestudio.registrasi.response.RegencyResponse;
+import com.digitcreativestudio.registrasi.response.SubmitResponse;
+import com.digitcreativestudio.registrasi.response.VillageResponse;
 
 import retrofit2.Call;
 import retrofit2.http.Field;
@@ -24,30 +22,30 @@ import retrofit2.http.Query;
 public interface RegisterService {
     @Headers("Content-Type: application/json")
     @GET("get_provinsi.php")
-    Call<List<Province>> getProvinces();
+    Call<ProvinceResponse> getProvinces();
 
     @Headers("Content-Type: application/json")
     @GET("get_kabupaten.php")
-    Call<List<Regency>> getRegencies(@Query("id") int idProvince);
+    Call<RegencyResponse> getRegencies(@Query("id") String idProvince);
 
     @Headers("Content-Type: application/json")
     @GET("get_kecamatan.php")
-    Call<List<District>> getDistricts(@Query("id") int idRegency);
+    Call<DistrictResponse> getDistricts(@Query("id") String idRegency);
 
     @Headers("Content-Type: application/json")
     @GET("get_kelurahan.php")
-    Call<List<Village>> getVillages(@Query("id") int idDistrict);
+    Call<VillageResponse> getVillages(@Query("id") String idDistrict);
 
     @Headers("Content-Type: application/json")
-    @GET("get_kelurahan.php")
-    Call<List<License>> getLicenses();
+    @GET("get_jenis_izin.php")
+    Call<LicenseResponse> getLicenses();
 
     @Headers("Content-Type: application/json")
-    @GET("get_kelurahan.php")
-    Call<List<LicenseRegion>> getLicenseRegions(@Query("id") int idLicense);
+    @GET("get_unit_kerja.php")
+    Call<LicenseRegionResponse> getLicenseRegions(@Query("id") String idLicense);
 
     @FormUrlEncoded
-    @POST("register.php")
+    @POST("new_register.php")
     Call<SubmitResponse> submit(@Field("jenis_identitas") String type,
                                 @Field("id_pemohon") String id,
                                 @Field("nama_pemohon") String name,
@@ -78,10 +76,10 @@ public interface RegisterService {
                                 @Field("id_kelurahan_perusahaan") String companyVillageId,
                                 @Field("nama_kelurahan_perusahaan") String companyVillageName,
 
-                                @Field("id_izin") String licenseId,
-                                @Field("nama_izin") String licenseName,
-                                @Field("id_unit_kerja") String licenseRegionId,
-                                @Field("nama_unit_kerja") String licenseRegionName,
+                                @Field("jenis_izin_id") String licenseId,
+                                @Field("jenis_izin_text") String licenseName,
+                                @Field("unit_kerja_id") String licenseRegionId,
+                                @Field("unit_kerja_text") String licenseRegionName,
 
                                 @Field("nama_lampiran") String attachmentName,
                                 @Field("lampiran") String attachment);
