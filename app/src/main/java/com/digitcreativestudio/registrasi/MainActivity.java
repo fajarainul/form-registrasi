@@ -789,6 +789,7 @@ public class MainActivity extends AppCompatActivity {
                             end = end > attachmentBase64.length() ? attachmentBase64.length() : end;
                             Log.e("base64", attachmentBase64.substring(start, end));
                         }
+                        Log.e("filename", FileUtil.rename(attachment.getName()));
                     }
                 }
                 break;
@@ -862,15 +863,6 @@ public class MainActivity extends AppCompatActivity {
         License license = licenses.get(licenseSpinner.getSelectedItemPosition()-1);
         LicenseRegion licenseRegion = licenseRegions.get(licenseRegionSpinner.getSelectedItemPosition()-1);
 
-        String[] filenameArray = attachment.getName().split("\\.");
-        String extension = filenameArray[filenameArray.length-1];
-        filenameArray[filenameArray.length-1] = "";
-        StringBuilder stringBuilder = new StringBuilder();
-        for(String filename : filenameArray){
-            stringBuilder.append(filename).append(".");
-        }
-        stringBuilder.append("-").append(System.currentTimeMillis()/1000).append(".").append(extension);
-        String filename = stringBuilder.toString();
         RegisterService registerService =
                 RegisterClient.getClient().create(RegisterService.class);
         Call<SubmitResponse> call = registerService.submit(
@@ -909,7 +901,7 @@ public class MainActivity extends AppCompatActivity {
                 String.valueOf(licenseRegion.getId()),
                 licenseRegion.getName(),
 
-                filename,
+                FileUtil.rename(attachment.getName()),
                 attachmentBase64);
 
         call.enqueue(new Callback<SubmitResponse>() {
