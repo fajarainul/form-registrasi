@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -42,6 +41,7 @@ import com.digitcreativestudio.registrasi.response.RegencyResponse;
 import com.digitcreativestudio.registrasi.response.SubmitResponse;
 import com.digitcreativestudio.registrasi.response.VillageResponse;
 import com.digitcreativestudio.registrasi.utils.FileUtil;
+import com.digitcreativestudio.registrasi.utils.PermissionUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -108,16 +108,8 @@ public class MainActivity extends AppCompatActivity {
     List<String> processes;
     AlertDialog alertDialog;
 
-    protected boolean shouldAskPermissions() {
-        return (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1);
-    }
-
     @TargetApi(23)
-    protected void askPermissions() {
-        String[] permissions = {
-                "android.permission.READ_EXTERNAL_STORAGE",
-                "android.permission.WRITE_EXTERNAL_STORAGE"
-        };
+    protected void askPermissions(String[] permissions) {
         int requestCode = 200;
         requestPermissions(permissions, requestCode);
     }
@@ -127,8 +119,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (shouldAskPermissions()) {
-            askPermissions();
+        String[] permissions = new String[]{
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                android.Manifest.permission.INTERNET
+        };
+
+        if(PermissionUtil.shouldAskPermissions(this, permissions)){
+            askPermissions(permissions);
         }
 
         processes = new ArrayList<>();
@@ -749,12 +747,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void showFileChooser() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("*/*");
+        String [] mimeTypes = {
+                "application/pdf",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        };
+        intent.setType("file/*");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
 
         try {
             startActivityForResult(
-                    intent,
+                    Intent.createChooser(intent, "Pilih Lampiran"),
                     FILE_SELECT_CODE);
         } catch (android.content.ActivityNotFoundException ex) {
             // Potentially direct the user to the Market with a Dialog
