@@ -754,7 +754,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             startActivityForResult(
-                    Intent.createChooser(intent, "Select a File to Upload"),
+                    intent,
                     FILE_SELECT_CODE);
         } catch (android.content.ActivityNotFoundException ex) {
             // Potentially direct the user to the Market with a Dialog
