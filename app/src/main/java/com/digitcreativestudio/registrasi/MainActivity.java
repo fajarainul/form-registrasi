@@ -764,6 +764,14 @@ public class MainActivity extends AppCompatActivity {
                     FILE_SELECT_CODE);
         } catch (android.content.ActivityNotFoundException ex) {
             // Potentially direct the user to the Market with a Dialog
+            showAlert("Aplikasi Tidak Ditemukan", "Silahkan install file manager terlebih dahulu.", "OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse("market://search?q=file%20manager&c=apps"));
+                    startActivity(intent);
+                }
+            });
             Toast.makeText(this, "Please install a File Manager.",
                     Toast.LENGTH_SHORT).show();
         }
