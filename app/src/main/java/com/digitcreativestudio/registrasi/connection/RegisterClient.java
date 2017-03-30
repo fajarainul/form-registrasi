@@ -10,6 +10,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class RegisterClient {
     public static final String BASE_URL = "http://fajarainul.informatikaundip.com/register/";
+
+//    public static final String BASE_URL = "https://tranquil-garden-73496.herokuapp.com/register/";
     private static Retrofit retrofit = null;
 
     private static HttpLoggingInterceptor logging = new HttpLoggingInterceptor();

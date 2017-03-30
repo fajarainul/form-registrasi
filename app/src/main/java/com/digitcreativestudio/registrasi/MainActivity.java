@@ -708,9 +708,6 @@ public class MainActivity extends AppCompatActivity {
 
                 if(response.body().isSuccess()){
                     licenseRegions = response.body().getResult();
-                    for(LicenseRegion lr : licenseRegions){
-                        Log.e(lr.getId()+"", lr.getName());
-                    }
 
                     String[] licenseRegionsArray = new String[licenseRegions.size()+1];
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
@@ -785,7 +782,13 @@ public class MainActivity extends AppCompatActivity {
                     }else{
                         atachTextView.setText(attachment.getName());
                         attachmentBase64 = FileUtil.convertFileToByteArray(attachment);
-                        Log.e("base64", attachmentBase64);
+                        int maxLogSize = 100;
+                        for(int i = 0; i <= attachmentBase64.length() / maxLogSize; i++) {
+                            int start = i * maxLogSize;
+                            int end = (i+1) * maxLogSize;
+                            end = end > attachmentBase64.length() ? attachmentBase64.length() : end;
+                            Log.e("base64", attachmentBase64.substring(start, end));
+                        }
                     }
                 }
                 break;
@@ -794,7 +797,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void validate(){
-        Log.e("CAPTCHA", String.valueOf(captcha.checkAnswer(captchaEditText.getText().toString())));
         if((idEditText.getText().toString().trim().equals("") ||
             nameEditText.getText().toString().trim().equals("") ||
             phoneEditText.getText().toString().trim().equals("") ||

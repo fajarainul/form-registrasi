@@ -10,12 +10,15 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Base64;
+import android.util.Base64OutputStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
 
 /**
  * Created by faqiharifian on 24/03/17.
@@ -109,6 +112,7 @@ public class FileUtil {
 
     public static String convertFileToByteArray(File f) {
         byte[] byteArray = null;
+        String result = "";
         try {
             InputStream inputStream = new FileInputStream(f);
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -121,9 +125,104 @@ public class FileUtil {
 
             byteArray = bos.toByteArray();
 
+            result = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+            result = URLEncoder.encode(result, "utf-8");
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return Base64.encodeToString(byteArray, Base64.NO_WRAP);
+
+        return result;
+    }
+
+    public static String convertFileToByte(File f) {
+        byte[] byteArray = null;
+        try {
+            InputStream inputStream = new FileInputStream(f);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] b = new byte[1024 * 11];
+            int bytesRead = 0;
+
+            while ((bytesRead = inputStream.read(b)) != -1) {
+                bos.write(b, 0, bytesRead);
+            }
+
+            byteArray = Base64.encode(bos.toByteArray(), Base64.NO_WRAP);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new String(byteArray);
+    }
+
+    public static String convertFileToByteArrayUTF8(File f) {
+        byte[] byteArray = null;
+        String result = "";
+        try {
+            InputStream inputStream = new FileInputStream(f);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] b = new byte[1024 * 11];
+            int bytesRead = 0;
+
+            while ((bytesRead = inputStream.read(b)) != -1) {
+                bos.write(b, 0, bytesRead);
+            }
+
+            byteArray = bos.toByteArray();
+
+            result = new String(Base64.encode(byteArray, Base64.NO_WRAP), "UTF-8");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public static String test(String path){
+        String result = "";
+        try {
+//            FileOutputStream fout = new FileOutputStream(path);
+            FileInputStream fin = new FileInputStream(path);
+
+            System.out.println("File Size:" + path.length());
+
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+            byte[] buffer = new byte[3 * 512];
+            int len = 0;
+            while ((len = fin.read(buffer)) >= 0) {
+                os.write(buffer, 0, len);
+            }
+
+            Base64OutputStream base64out = new Base64OutputStream(os,Base64.NO_WRAP);
+            System.out.println("Encoded Size:" + os.size());
+
+            base64out.flush();
+            base64out.close();//this did the tricks. Please see explanation.
+
+            result = new String(os.toByteArray(), "UTF-8");
+
+//            fout.write(os.toByteArray());
+//            fout.flush();
+//            fout.close();
+            os.close();
+            fin.close();
+
+//            Log.e("base64", result);
+//            int maxLogSize = 100;
+//            for(int i = 0; i <= result.length() / maxLogSize; i++) {
+//                int start = i * maxLogSize;
+//                int end = (i+1) * maxLogSize;
+//                end = end > result.length() ? result.length() : end;
+//                Log.e("base64", result.substring(start, end));
+//            }
+//
+//            return result;
+        }catch(FileNotFoundException fnfe){
+            fnfe.printStackTrace();
+        }catch(IOException ie){
+            ie.printStackTrace();
+        }
+
+        return result;
     }
 }
