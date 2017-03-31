@@ -174,9 +174,11 @@
         </Spinner>
 
         <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
+            android:layout_marginTop="10dp"
             android:layout_marginLeft="8dp">
             <Button
                 android:id="@+id/attachment_button"
@@ -184,13 +186,12 @@
                 android:layout_height="wrap_content"
                 android:paddingLeft="25px"
                 android:paddingRight="25px"
-                android:text="Pilih Lampiran..."
+                android:text="Pilih Lampiran (max 2MB)"
                 style="@style/style_button"/>
             <TextView
                 android:id="@+id/attachment_textview"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginLeft="8dp"/>
         </LinearLayout>
 
@@ -203,8 +204,9 @@
             <ImageView
                 android:id="@+id/captcha_imageview"
                 android:layout_width="0dp"
-                android:layout_height="300dip"
-                android:layout_weight="1"/>
+                android:layout_height="0dp"
+                android:scaleType="centerCrop"
+                android:layout_weight="2"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

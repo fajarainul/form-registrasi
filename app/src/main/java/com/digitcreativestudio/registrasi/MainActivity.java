@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
     ImageView captchaImageView;
     EditText captchaEditText;
+    int captchaHeight, captchaWidth;
 
     Button attachButton;
     TextView atachTextView;
@@ -84,20 +85,6 @@ public class MainActivity extends AppCompatActivity {
 
     List<License> licenses = new ArrayList<>();
     List<LicenseRegion> licenseRegions = new ArrayList<>();
-
-    ArrayAdapter<String> mIdTypesAdapter;
-    ArrayAdapter<String> provincesAdapter;
-    ArrayAdapter<String> regenciesAdapter;
-    ArrayAdapter<String> districtsAdapter;
-    ArrayAdapter<String> villagesAdapter;
-
-    ArrayAdapter<String> provincesCompanyAdapter;
-    ArrayAdapter<String> regenciesCompanyAdapter;
-    ArrayAdapter<String> districtsCompanyAdapter;
-    ArrayAdapter<String> villagesCompanyAdapter;
-
-    ArrayAdapter<String> licensesAdapter;
-    ArrayAdapter<String> licenseRegionsAdapter;
 
     String attachmentPath = "";
     String attachmentBase64 = "";
@@ -182,9 +169,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        captchaImageView.post(new Runnable() {
+            @Override
+            public void run() {
+                captchaWidth = captchaImageView.getMeasuredWidth();
+                captchaHeight = captchaImageView.getMeasuredWidth() / 3;
+                initiateCaptcha();
+            }
+        });
+
         initiate();
 
-        initiateCaptcha();
         getIdType();
 
         getProvinces(true);
@@ -236,10 +231,10 @@ public class MainActivity extends AppCompatActivity {
             attachButton.setText(Html.fromHtml("Pilih Lampiran<sup>*</sup> (max: 2Mb)").toString());
         }
 
-        populateSpinner(provinceSpinner, provincesAdapter, provincesArray);
-        populateSpinner(regencySpinner, regenciesAdapter, regenciesArray);
-        populateSpinner(districtSpinner, districtsAdapter, districtsArray);
-        populateSpinner(villageSpinner, villagesAdapter, villagesArray);
+        populateSpinner(provinceSpinner, provincesArray);
+        populateSpinner(regencySpinner, regenciesArray);
+        populateSpinner(districtSpinner, districtsArray);
+        populateSpinner(villageSpinner, villagesArray);
 
         String[] provincesCompanyArray = new String[1];
         provincesCompanyArray[0] = "Pilih Provinsi:";
@@ -249,19 +244,19 @@ public class MainActivity extends AppCompatActivity {
         districtsCompanyArray[0] = "Pilih Kecamatan:";
         String[] villagesCompanyArray = new String[1];
         villagesCompanyArray[0] = "Pilih Kelurahan:";
-        populateSpinner(companyProvinceSpinner, provincesCompanyAdapter, provincesCompanyArray);
-        populateSpinner(companyRegencySpinner, regenciesCompanyAdapter, regenciesCompanyArray);
-        populateSpinner(companyDistrictSpinner, districtsCompanyAdapter, districtsCompanyArray);
-        populateSpinner(companyVillageSpinner, villagesCompanyAdapter, villagesCompanyArray);
+        populateSpinner(companyProvinceSpinner, provincesCompanyArray);
+        populateSpinner(companyRegencySpinner, regenciesCompanyArray);
+        populateSpinner(companyDistrictSpinner, districtsCompanyArray);
+        populateSpinner(companyVillageSpinner, villagesCompanyArray);
 
-        populateSpinner(licenseSpinner, licensesAdapter, licensesArray);
-        populateSpinner(licenseRegionSpinner, licenseRegionsAdapter, licenseRegionsArray);
+        populateSpinner(licenseSpinner, licensesArray);
+        populateSpinner(licenseRegionSpinner, licenseRegionsArray);
 
         findViewById(R.id.main_layout).requestFocus();
     }
 
-    private void populateSpinner(Spinner spinner, ArrayAdapter<String> arrayAdapter, String[] strings){
-        arrayAdapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, strings);
+    private void populateSpinner(Spinner spinner, String[] strings){
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_spinner_item, strings);
         arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(arrayAdapter);
     }
@@ -325,15 +320,12 @@ public class MainActivity extends AppCompatActivity {
                 if(response.body().isSuccess()){
                     Spinner spinner;
                     String[] provArray;
-                    ArrayAdapter<String> adapter;
                     if(isSelf){
                         provinces = response.body().getResult();
                         spinner = provinceSpinner;
-                        adapter = provincesAdapter;
                     }else{
                         provincesCompany = response.body().getResult();
                         spinner = companyProvinceSpinner;
-                        adapter = provincesCompanyAdapter;
                     }
                     final List<Province> prov = response.body().getResult();
 
@@ -351,7 +343,7 @@ public class MainActivity extends AppCompatActivity {
                         provArray[i] = prov.get(i-1).getName();
                     }
 
-                    populateSpinner(spinner, adapter, provArray);
+                    populateSpinner(spinner, provArray);
 
                     spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                         @Override
@@ -410,16 +402,13 @@ public class MainActivity extends AppCompatActivity {
 
                 if(response.body().isSuccess()){
                     Spinner spinner;
-                    ArrayAdapter<String> adapter;
                     String[] regArray;
                     if(isSelf){
                         regencies = response.body().getResult();
                         spinner = regencySpinner;
-                        adapter =  regenciesAdapter;
                     }else{
                         regenciesCompany = response.body().getResult();
                         spinner = companyRegencySpinner;
-                        adapter =  regenciesCompanyAdapter;
                     }
                     final List<Regency> reg = response.body().getResult();
 
@@ -437,7 +426,7 @@ public class MainActivity extends AppCompatActivity {
                         regArray[i] = reg.get(i-1).getName();
                     }
 
-                    populateSpinner(spinner, adapter, regArray);
+                    populateSpinner(spinner, regArray);
 
                     spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                         @Override
@@ -496,16 +485,13 @@ public class MainActivity extends AppCompatActivity {
 
                 if(response.body().isSuccess()){
                     Spinner spinner;
-                    ArrayAdapter<String> adapter;
                     String[] disArray;
                     if(isSelf){
                         districts = response.body().getResult();
                         spinner = districtSpinner;
-                        adapter = districtsAdapter;
                     }else{
                         districtsCompany = response.body().getResult();
                         spinner = companyDistrictSpinner;
-                        adapter = districtsCompanyAdapter;
                     }
                     final List<District> dis = response.body().getResult();
 
@@ -523,7 +509,7 @@ public class MainActivity extends AppCompatActivity {
                         disArray[i] = dis.get(i-1).getName();
                     }
 
-                    populateSpinner(spinner, adapter, disArray);
+                    populateSpinner(spinner, disArray);
 
                     spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                         @Override
@@ -580,16 +566,13 @@ public class MainActivity extends AppCompatActivity {
 
                 if(response.body().isSuccess()){
                     Spinner spinner;
-                    ArrayAdapter<String> adapter;
                     String[] vilArray;
                     if(isSelf){
                         villages = response.body().getResult();
                         spinner = villageSpinner;
-                        adapter = villagesAdapter;
                     }else{
                         villagesCompany = response.body().getResult();
                         spinner = companyVillageSpinner;
-                        adapter = villagesCompanyAdapter;
                     }
                     final List<Village> vil = response.body().getResult();
 
@@ -607,7 +590,7 @@ public class MainActivity extends AppCompatActivity {
                         vilArray[i] = vil.get(i-1).getName();
                     }
 
-                    populateSpinner(spinner, adapter, vilArray);
+                    populateSpinner(spinner, vilArray);
                 }else{
                     showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
                 }
@@ -656,7 +639,7 @@ public class MainActivity extends AppCompatActivity {
                         licensesArray[i] = licenses.get(i-1).getName();
                     }
 
-                    populateSpinner(licenseSpinner, licensesAdapter, licensesArray);
+                    populateSpinner(licenseSpinner, licensesArray);
 
                     licenseSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                         @Override
@@ -718,7 +701,7 @@ public class MainActivity extends AppCompatActivity {
                         licenseRegionsArray[i] = licenseRegions.get(i - 1).getName();
                     }
 
-                    populateSpinner(licenseRegionSpinner, licenseRegionsAdapter, licenseRegionsArray);
+                    populateSpinner(licenseRegionSpinner, licenseRegionsArray);
                 }else{
                     showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
                 }
@@ -740,9 +723,9 @@ public class MainActivity extends AppCompatActivity {
     private void initiateCaptcha(){
         captchaEditText.setText("");
         captcha = new MathCaptcha(300, 100, MathCaptcha.MathOptions.PLUS_MINUS_MULTIPLY);
-//        Captcha c = new TextCaptcha(300, 100, 5, TextCaptcha.TextOptions.NUMBERS_AND_LETTERS);
+//        Captcha c = new TextCaptcha(captchaWidth/2, captchaHeight/2, 5, TextCaptcha.TextOpt'ions.NUMBERS_AND_LETTERS);
         captchaImageView.setImageBitmap(captcha.getImage());
-        captchaImageView.setLayoutParams(new LinearLayout.LayoutParams(captcha.getWidth() *2, captcha.getHeight() *2));
+        captchaImageView.setLayoutParams(new LinearLayout.LayoutParams(captchaWidth, captchaHeight));
     }
 
     private void showFileChooser() {

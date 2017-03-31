@@ -13,6 +13,7 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:padding">5dp</item>
         <item name="android:textSize">20dp</item>
+        <item name="android:textColor">@android:color/white</item>
         <item name="android:layout_width">match_parent</item>
     </style>
 
@@ -22,6 +23,7 @@
         <item name="android:padding">5dp</item>
         <item name="android:paddingLeft">50dp</item>
         <item name="android:textSize">16dp</item>
+        <item name="android:textColor">@android:color/white</item>
         <item name="android:layout_width">match_parent</item>
     </style>
 
