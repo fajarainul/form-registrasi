@@ -2,6 +2,7 @@ package com.digitcreativestudio.registrasi;
 
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -12,13 +13,16 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,7 +55,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
     private static final int FILE_SELECT_CODE = 0;
 
     Spinner idTypeSpinner, provinceSpinner, regencySpinner, districtSpinner, villageSpinner;
@@ -151,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
         attachButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                attachButton.requestFocus();
                 showFileChooser();
             }
         });
@@ -905,9 +910,22 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<SubmitResponse> call, Response<SubmitResponse> response) {
                 dismissProgressBar(process);
-
-                if(response.body().isSuccess()){
-                    showAlert("Berhasil", "Data berhasil disimpan", "OK", null);
+                SubmitResponse submitResponse = response.body();
+                if(submitResponse.isSuccess()){
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    View view = getLayoutInflater().inflate(R.layout.success_dialog, null);
+                    builder.setView(view);
+                    builder.setCancelable(false);
+                    builder.setPositiveButton("OK", null);
+                    builder.setTitle("Berhasil");
+                    ((TextView) view.findViewById(R.id.success_no_registration))
+                            .setText(submitResponse.getRegistrationNumber());
+                    ((TextView) view.findViewById(R.id.success_name))
+                            .setText(submitResponse.getName());
+                    if(!submitResponse.getCompanyName().equals(""))
+                        ((TextView) view.findViewById(R.id.success_company_name))
+                                .setText(submitResponse.getCompanyName());
+                    builder.show();
                 }else{
                     showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
                 }

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="9dip"
+    android:paddingBottom="3dip"
+    android:paddingLeft="3dip"
+    android:paddingRight="1dip">
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="2dip"
+        android:paddingLeft="19dip"
+        android:paddingRight="15dip">
+        <TableRow>
+            <TextView
+                android:layout_span="3"
+                android:text="Data Berhasil Disimpan."/>
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:text="No Pendaftaran"/>
+            <TextView
+                android:text=" : "/>
+            <TextView
+                android:layout_weight="1"
+                android:id="@+id/success_no_registration"
+                android:text="57948573894"/>
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:text="Nama"/>
+            <TextView
+                android:text=" : "/>
+            <TextView
+                android:layout_weight="1"
+                android:id="@+id/success_name"
+                android:text="fajifiwngjing enjgi enjgierngij erig"/>
+        </TableRow>
+        <TableRow>
+            <TextView
+                android:text="Nama Perusahaan"/>
+            <TextView
+                android:text=" : "/>
+            <TextView
+                android:layout_weight="1"
+                android:id="@+id/success_company_name"
+                android:text="gmjig ntrinhitrjnhj rnth rin thin"/>
+        </TableRow>
+
+    </TableLayout>
+</LinearLayout>

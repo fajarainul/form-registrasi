@@ -187,6 +187,7 @@
                 android:paddingLeft="25px"
                 android:paddingRight="25px"
                 android:text="Pilih Lampiran (max 2MB)"
+                android:focusable="true"
                 style="@style/style_button"/>
             <TextView
                 android:id="@+id/attachment_textview"
