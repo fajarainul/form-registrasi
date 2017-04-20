@@ -2,7 +2,6 @@ package com.digitcreativestudio.registrasi;
 
 import android.annotation.TargetApi;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -13,16 +12,13 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,6 +45,7 @@ import com.digitcreativestudio.registrasi.utils.PermissionUtil;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import retrofit2.Call;
@@ -98,6 +95,14 @@ public class MainActivity extends AppCompatActivity{
     ProgressDialog progDialog;
     List<String> processes;
     AlertDialog alertDialog;
+
+    private String [] mimeTypes = {
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    };
 
     @TargetApi(23)
     protected void askPermissions(String[] permissions) {
@@ -735,13 +740,7 @@ public class MainActivity extends AppCompatActivity{
 
     private void showFileChooser() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        String [] mimeTypes = {
-                "application/pdf",
-                "application/msword",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "application/vnd.ms-excel",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        };
+
         intent.setType("file/*");
         intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -773,6 +772,8 @@ public class MainActivity extends AppCompatActivity{
                     attachmentUri = data.getData();
                     attachmentPath = FileUtil.getPath(this, attachmentUri);
                     attachment = new File(attachmentPath);
+                    Log.e("mime", FileUtil.getType(this, attachmentUri));
+                    Log.e("exists", String.valueOf(Arrays.asList(mimeTypes).contains(FileUtil.getType(this, attachmentUri))));
                     if((attachment.length() / 1024 / 1024) > 2){
                         attachmentUri = null;
                         attachmentPath = "";
@@ -781,6 +782,14 @@ public class MainActivity extends AppCompatActivity{
                         attachmentBase64 = "";
 
                         showAlert("Gagal", "Ukuran file tidak boleh lebih dari 2Mb.", "OK", null);
+                    }else if(!Arrays.asList(mimeTypes).contains(FileUtil.getType(this, attachmentUri))){
+                        attachmentUri = null;
+                        attachmentPath = "";
+                        attachment = null;
+                        atachTextView.setText("");
+                        attachmentBase64 = "";
+
+                        showAlert("Gagal", "Silakan pilih file .xls .xlsx .doc .docx .pdf.", "OK", null);
                     }else{
                         atachTextView.setText(attachment.getName());
                         attachmentBase64 = FileUtil.convertFileToByteArray(attachment);

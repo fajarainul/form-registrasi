@@ -1,6 +1,7 @@
 package com.digitcreativestudio.registrasi.utils;
 
 import android.annotation.TargetApi;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
@@ -10,6 +11,7 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Base64;
+import android.webkit.MimeTypeMap;
 
 import com.github.slugify.Slugify;
 
@@ -147,5 +149,19 @@ public class FileUtil {
         }
         filename = (new Slugify()).slugify(filename);
         return filename+"."+extension;
+    }
+
+    public static String getType(Context context, Uri uri){
+        String mimeType = null;
+        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            ContentResolver cr = context.getContentResolver();
+            mimeType = cr.getType(uri);
+        } else {
+            String fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri
+                    .toString());
+            mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
+                    fileExtension.toLowerCase());
+        }
+        return mimeType;
     }
 }
