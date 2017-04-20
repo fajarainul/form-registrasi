@@ -2,6 +2,7 @@ package com.digitcreativestudio.registrasi;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -12,8 +13,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.view.KeyEvent;
 import android.view.View;
+import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -40,13 +41,17 @@ public class WebActivity extends AppCompatActivity {
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     };
 
-
+    ProgressDialog progressDialog;
     AlertDialog alertDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web);
+
+        progressDialog = new ProgressDialog(WebActivity.this);
+        progressDialog.setIndeterminate(true);
+        progressDialog.setCancelable(false);
 
         alertDialog = new AlertDialog.Builder(this).create();
 
@@ -67,7 +72,30 @@ public class WebActivity extends AppCompatActivity {
             webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
 
+        webView.addJavascriptInterface(new WebAppInterface(this), "Android");
         webView.loadUrl("http://ternatekota.sicantik.layanan.go.id/perizinan_online");
+    }
+
+    public class WebAppInterface {
+        Context mContext;
+
+        /** Instantiate the interface and set the context */
+        WebAppInterface(Context c) {
+            mContext = c;
+        }
+
+        /** Show a toast from the web page */
+        @JavascriptInterface
+        public void showProgress() {
+            showProgressBar();
+        }
+
+        @JavascriptInterface
+        public void hideProgress(){
+            if (progressDialog.isShowing()) {
+                progressDialog.dismiss();
+            }
+        }
     }
 
     @Override
@@ -183,8 +211,6 @@ public class WebActivity extends AppCompatActivity {
     }
 
     public class PQClient extends WebViewClient {
-        ProgressDialog progressDialog;
-
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             // If url contains mailto link then open Mail Intent
@@ -193,9 +219,6 @@ public class WebActivity extends AppCompatActivity {
                 //Open links in new browser
                 view.getContext().startActivity(
                         new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-
-                // Here we can open new activity
-
                 return true;
             }else {
                 // Stay within this webview and load url
@@ -210,12 +233,7 @@ public class WebActivity extends AppCompatActivity {
             // Then show progress  Dialog
             // in standard case YourActivity.this
             if (progressDialog == null) {
-                progressDialog = new ProgressDialog(WebActivity.this);
-                progressDialog.setIndeterminate(true);
-                progressDialog.setCancelable(false);
-                progressDialog.show();
-                progressDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                progressDialog.setContentView(R.layout.progress_bar);
+                showProgressBar();
             }
         }
 
@@ -228,12 +246,17 @@ public class WebActivity extends AppCompatActivity {
                 // Close progressDialog
                 if (progressDialog.isShowing()) {
                     progressDialog.dismiss();
-                    progressDialog = null;
                 }
             } catch (Exception exception) {
                 exception.printStackTrace();
             }
         }
+    }
+
+    private void showProgressBar() {
+        progressDialog.show();
+        progressDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        progressDialog.setContentView(R.layout.progress_bar);
     }
 
     private void showAlert(String title, String message, String positiveButton, DialogInterface.OnClickListener listener){
