@@ -2,12 +2,16 @@ package com.digitcreativestudio.registrasi;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -26,10 +30,12 @@ import com.digitcreativestudio.registrasi.utils.FileUtil;
 import java.util.Arrays;
 
 public class WebActivity extends AppCompatActivity {
+    private final String URL = "http://ternatekota.sicantik.layanan.go.id/perizinan_online";
     private static final int INPUT_FILE_REQUEST_CODE = 1;
     private static final int FILECHOOSER_RESULTCODE = 1;
     private static final String TAG = WebActivity.class.getSimpleName();
     private WebView webView;
+    private boolean webViewFinished = false;
     private ValueCallback<Uri> mUploadMessage;
     private ValueCallback<Uri[]> mFilePathCallback;
 
@@ -43,6 +49,21 @@ public class WebActivity extends AppCompatActivity {
 
     ProgressDialog progressDialog;
     AlertDialog alertDialog;
+
+    BroadcastReceiver receiver;
+    IntentFilter filter;
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unregisterReceiver(receiver);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(receiver, filter);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +85,7 @@ public class WebActivity extends AppCompatActivity {
         webSettings.setAllowFileAccess(true);
         webView.setWebViewClient(new PQClient());
         webView.setWebChromeClient(new PQChromeClient());
-        //if SDK version is greater of 19 then activate hardware acceleration otherwise activate software acceleration
+
         if (Build.VERSION.SDK_INT >= 19) {
             webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         }
@@ -72,18 +93,28 @@ public class WebActivity extends AppCompatActivity {
             webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
 
-        webView.addJavascriptInterface(new WebAppInterface(this), "Android");
-        webView.loadUrl("http://ternatekota.sicantik.layanan.go.id/perizinan_online");
+        webView.addJavascriptInterface(new WebAppInterface(), "Android");
+
+        ConnectivityManager cm =
+                (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+
+        if(!isConnected){
+            findViewById(R.id.text_no_internet).setVisibility(View.VISIBLE);
+        }else{
+            findViewById(R.id.text_no_internet).setVisibility(View.GONE);
+            webView.loadUrl(URL);
+        }
+
+        receiver = new NetworkChangeReceiver();
+        filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(receiver, filter);
     }
 
     public class WebAppInterface {
-        Context mContext;
-
-        /** Instantiate the interface and set the context */
-        WebAppInterface(Context c) {
-            mContext = c;
-        }
-
         /** Show a toast from the web page */
         @JavascriptInterface
         public void showProgress() {
@@ -232,13 +263,13 @@ public class WebActivity extends AppCompatActivity {
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             // Then show progress  Dialog
             // in standard case YourActivity.this
-            if (progressDialog == null) {
-                showProgressBar();
-            }
+            showProgressBar();
+            webViewFinished = false;
         }
 
         // Called when all page resources loaded
         public void onPageFinished(WebView view, String url) {
+            webViewFinished = true;
             webView.loadUrl("javascript:(function(){ "+
                     "document.getElementById('android-app').style.display='none';})()");
 
@@ -249,6 +280,26 @@ public class WebActivity extends AppCompatActivity {
                 }
             } catch (Exception exception) {
                 exception.printStackTrace();
+            }
+        }
+    }
+
+    public class NetworkChangeReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+            ConnectivityManager cm =
+                    (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+            boolean isConnected = activeNetwork != null &&
+                    activeNetwork.isConnected();
+
+            if(!isConnected){
+                findViewById(R.id.text_no_internet).setVisibility(View.VISIBLE);
+            }else{
+                findViewById(R.id.text_no_internet).setVisibility(View.GONE);
+                if(!webViewFinished)
+                    webView.loadUrl(URL);
             }
         }
     }
