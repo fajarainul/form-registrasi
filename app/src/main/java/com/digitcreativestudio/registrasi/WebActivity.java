@@ -1,5 +1,6 @@
 package com.digitcreativestudio.registrasi;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -24,13 +25,20 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.TextView;
 
 import com.digitcreativestudio.registrasi.utils.FileUtil;
+import com.digitcreativestudio.registrasi.utils.PermissionUtil;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.util.Arrays;
 
 public class WebActivity extends AppCompatActivity {
-    private final String URL = "http://ternatekota.sicantik.layanan.go.id/perizinan_online";
+    private final String URL = "http://fajarainul.informatikaundip.com/register/form.php";
     private static final int INPUT_FILE_REQUEST_CODE = 1;
     private static final int FILECHOOSER_RESULTCODE = 1;
     private static final String TAG = WebActivity.class.getSimpleName();
@@ -53,6 +61,10 @@ public class WebActivity extends AppCompatActivity {
     BroadcastReceiver receiver;
     IntentFilter filter;
 
+    View dialogView;
+    AlertDialog.Builder builder;
+    AlertDialog successDialog;
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -65,10 +77,40 @@ public class WebActivity extends AppCompatActivity {
         registerReceiver(receiver, filter);
     }
 
+    @TargetApi(23)
+    protected void askPermissions(String[] permissions) {
+        int requestCode = 200;
+        requestPermissions(permissions, requestCode);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web);
+
+        builder = new AlertDialog.Builder(WebActivity.this);
+        dialogView = getLayoutInflater().inflate(R.layout.success_dialog, null);
+        builder.setView(dialogView);
+        builder.setCancelable(false);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                successDialog.dismiss();
+                startActivity(new Intent(WebActivity.this, WebActivity.class));
+                finish();
+            }
+        });
+        builder.setTitle("Berhasil");
+
+        String[] permissions = new String[]{
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                android.Manifest.permission.INTERNET
+        };
+
+        if(PermissionUtil.shouldAskPermissions(this, permissions)){
+            askPermissions(permissions);
+        }
 
         progressDialog = new ProgressDialog(WebActivity.this);
         progressDialog.setIndeterminate(true);
@@ -78,11 +120,14 @@ public class WebActivity extends AppCompatActivity {
 
         webView = (WebView) findViewById(R.id.webView);
         WebSettings webSettings = webView.getSettings();
-        webSettings.setAppCacheEnabled(true);
-        webSettings.setCacheMode(webSettings.LOAD_CACHE_ELSE_NETWORK);
+        webSettings.setAppCacheEnabled(false);
+        webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         webSettings.setJavaScriptEnabled(true);
         webSettings.setLoadWithOverviewMode(true);
         webSettings.setAllowFileAccess(true);
+        webSettings.setAllowContentAccess(true);
+        webSettings.setUserAgentString("Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36");
+        webView.clearCache(true);
         webView.setWebViewClient(new PQClient());
         webView.setWebChromeClient(new PQChromeClient());
 
@@ -92,8 +137,6 @@ public class WebActivity extends AppCompatActivity {
         else if(Build.VERSION.SDK_INT < 19) {
             webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
-
-        webView.addJavascriptInterface(new WebAppInterface(), "Android");
 
         ConnectivityManager cm =
                 (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -112,21 +155,6 @@ public class WebActivity extends AppCompatActivity {
         receiver = new NetworkChangeReceiver();
         filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(receiver, filter);
-    }
-
-    public class WebAppInterface {
-        /** Show a toast from the web page */
-        @JavascriptInterface
-        public void showProgress() {
-            showProgressBar();
-        }
-
-        @JavascriptInterface
-        public void hideProgress(){
-            if (progressDialog.isShowing()) {
-                progressDialog.dismiss();
-            }
-        }
     }
 
     @Override
@@ -191,11 +219,8 @@ public class WebActivity extends AppCompatActivity {
     }
 
     public class PQChromeClient extends WebChromeClient {
-
-        // For Android 5.0
         @Override
         public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> filePath, WebChromeClient.FileChooserParams fileChooserParams) {
-            // Double check that we don't have any existing callbacks
             if (mFilePathCallback != null) {
                 mFilePathCallback.onReceiveValue(null);
             }
@@ -211,27 +236,21 @@ public class WebActivity extends AppCompatActivity {
             return true;
         }
 
-        // openFileChooser for Android 3.0+
         public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType) {
             mUploadMessage = uploadMsg;
-            // Create AndroidExampleFolder at sdcard
-            // Create AndroidExampleFolder at sdcard
 
             Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
             contentSelectionIntent.setType("file/*");
             contentSelectionIntent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
             contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
 
-            // On select image call onActivityResult method of activity
             startActivityForResult(contentSelectionIntent, FILECHOOSER_RESULTCODE);
         }
 
-        // openFileChooser for Android < 3.0
         public void openFileChooser(ValueCallback<Uri> uploadMsg) {
             openFileChooser(uploadMsg, "");
         }
 
-        //openFileChooser for other Android versions
         public void openFileChooser(ValueCallback<Uri> uploadMsg,
                                     String acceptType,
                                     String capture) {
@@ -243,38 +262,40 @@ public class WebActivity extends AppCompatActivity {
 
     public class PQClient extends WebViewClient {
         @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            // If url contains mailto link then open Mail Intent
-            if (url.contains("mailto:")) {
-                // Could be cleverer and use a regex
-                //Open links in new browser
-                view.getContext().startActivity(
-                        new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                return true;
-            }else {
-                // Stay within this webview and load url
-                view.loadUrl(url);
-                return true;
-            }
-        }
-
-        //Show loader on url load
-        @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
-            // Then show progress  Dialog
-            // in standard case YourActivity.this
-            showProgressBar();
+            if(!url.contains("register_success"))
+                showProgressBar();
             webViewFinished = false;
         }
 
-        // Called when all page resources loaded
         public void onPageFinished(WebView view, String url) {
             webViewFinished = true;
-            webView.loadUrl("javascript:(function(){ "+
-                    "document.getElementById('android-app').style.display='none';})()");
+
+            if(url.contains("register_success")){
+                webView.setVisibility(View.INVISIBLE);
+            }
+
+            webView.addJavascriptInterface(new Object(){
+                @SuppressWarnings("unused")
+                @JavascriptInterface
+                public void showHTML(final String html) {
+                    Document doc = Jsoup.parse(html);
+                    Element blockContent = doc.select(".block-content").first();
+                    Element table = blockContent.getElementsByTag("table").first();
+                    Elements bs = table.getElementsByTag("b");
+                    ((TextView) dialogView.findViewById(R.id.success_no_registration))
+                            .setText(bs.eq(0).text());
+                    ((TextView) dialogView.findViewById(R.id.success_name))
+                            .setText(bs.eq(1).text());
+                    ((TextView) dialogView.findViewById(R.id.success_license_name))
+                            .setText(bs.eq(2).text());
+                    successDialog = builder.create();
+                    successDialog.show();
+                }
+            }, "HTMLOUT");
+            webView.loadUrl("javascript:window.HTMLOUT.showHTML('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
 
             try {
-                // Close progressDialog
                 if (progressDialog.isShowing()) {
                     progressDialog.dismiss();
                 }

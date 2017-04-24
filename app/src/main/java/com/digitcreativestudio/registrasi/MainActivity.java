@@ -38,19 +38,32 @@ import com.digitcreativestudio.registrasi.response.LicenseRegionResponse;
 import com.digitcreativestudio.registrasi.response.LicenseResponse;
 import com.digitcreativestudio.registrasi.response.ProvinceResponse;
 import com.digitcreativestudio.registrasi.response.RegencyResponse;
-import com.digitcreativestudio.registrasi.response.SubmitResponse;
 import com.digitcreativestudio.registrasi.response.VillageResponse;
 import com.digitcreativestudio.registrasi.utils.FileUtil;
 import com.digitcreativestudio.registrasi.utils.PermissionUtil;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class MainActivity extends AppCompatActivity{
     private static final int FILE_SELECT_CODE = 0;
@@ -369,7 +382,7 @@ public class MainActivity extends AppCompatActivity{
                             }
                             if(!(i-1 < 0)) {
                                 Province province = prov.get(i-1);
-                                getRegencies(province.getId(), isSelf);
+//                                getRegencies(province.getId(), isSelf);
                             }
                         }
 
@@ -809,38 +822,38 @@ public class MainActivity extends AppCompatActivity{
     }
 
     private void validate(){
-        if((idEditText.getText().toString().trim().equals("") ||
-            nameEditText.getText().toString().trim().equals("") ||
-            phoneEditText.getText().toString().trim().equals("") ||
-            addressEditText.getText().toString().trim().equals("") ||
-            (idTypeSpinner.getSelectedItemPosition()-1) < 0 ||
-            (provinceSpinner.getSelectedItemPosition()-1) < 0 ||
-            (regencySpinner.getSelectedItemPosition()-1) < 0 ||
-            (districtSpinner.getSelectedItemPosition()-1) < 0 ||
-            (villageSpinner.getSelectedItemPosition()-1) < 0 ||
-            (licenseSpinner.getSelectedItemPosition()-1) < 0 ||
-            (licenseRegionSpinner.getSelectedItemPosition()-1) < 0)){
-
-            showAlert("Gagal", "Form dengan tanda (*) wajib diisi.", "OK", null);
-
-            initiateCaptcha();
-            dismissProgressBar("submit");
-            return;
-        }
-        if(!captcha.checkAnswer(captchaEditText.getText().toString())){
-            showAlert("Gagal", "CAPTCHA tidak sesuai. Silahkan coba kembali.", "OK", null);
-
-            initiateCaptcha();
-            dismissProgressBar("submit");
-            return;
-        }
-        if(attachmentBase64.equals("")){
-            showAlert("Gagal", "Silahkan pilih file lampiran terlebih dahulu.", "OK", null);
-
-            initiateCaptcha();
-            dismissProgressBar("submit");
-            return;
-        }
+//        if((idEditText.getText().toString().trim().equals("") ||
+//            nameEditText.getText().toString().trim().equals("") ||
+//            phoneEditText.getText().toString().trim().equals("") ||
+//            addressEditText.getText().toString().trim().equals("") ||
+//            (idTypeSpinner.getSelectedItemPosition()-1) < 0 ||
+//            (provinceSpinner.getSelectedItemPosition()-1) < 0 ||
+//            (regencySpinner.getSelectedItemPosition()-1) < 0 ||
+//            (districtSpinner.getSelectedItemPosition()-1) < 0 ||
+//            (villageSpinner.getSelectedItemPosition()-1) < 0 ||
+//            (licenseSpinner.getSelectedItemPosition()-1) < 0 ||
+//            (licenseRegionSpinner.getSelectedItemPosition()-1) < 0)){
+//
+//            showAlert("Gagal", "Form dengan tanda (*) wajib diisi.", "OK", null);
+//
+//            initiateCaptcha();
+//            dismissProgressBar("submit");
+//            return;
+//        }
+//        if(!captcha.checkAnswer(captchaEditText.getText().toString())){
+//            showAlert("Gagal", "CAPTCHA tidak sesuai. Silahkan coba kembali.", "OK", null);
+//
+//            initiateCaptcha();
+//            dismissProgressBar("submit");
+//            return;
+//        }
+//        if(attachmentBase64.equals("")){
+//            showAlert("Gagal", "Silahkan pilih file lampiran terlebih dahulu.", "OK", null);
+//
+//            initiateCaptcha();
+//            dismissProgressBar("submit");
+//            return;
+//        }
 
         initiateCaptcha();
         submit();
@@ -849,102 +862,260 @@ public class MainActivity extends AppCompatActivity{
     private void submit(){
         final String process = "submit";
 
-        Province province = provinces.get(provinceSpinner.getSelectedItemPosition()-1);
-        Regency regency = regencies.get(regencySpinner.getSelectedItemPosition()-1);
-        District district = districts.get(districtSpinner.getSelectedItemPosition()-1);
-        Village village = villages.get(villageSpinner.getSelectedItemPosition()-1);
+//        Province province = provinces.get(provinceSpinner.getSelectedItemPosition()-1);
+//        Regency regency = regencies.get(regencySpinner.getSelectedItemPosition()-1);
+//        District district = districts.get(districtSpinner.getSelectedItemPosition()-1);
+//        Village village = villages.get(villageSpinner.getSelectedItemPosition()-1);
+//
+//        Province companyProvince = new Province ();
+//        if(companyProvinceSpinner.getSelectedItemPosition() > 0){
+//            provincesCompany.get(companyProvinceSpinner.getSelectedItemPosition()-1);
+//        }
+//        Regency companyRegency = new Regency ();
+//        if(companyRegencySpinner.getSelectedItemPosition() > 0){
+//            regenciesCompany.get(companyRegencySpinner.getSelectedItemPosition()-1);
+//        }
+//        District companyDistrict = new District ();
+//        if(companyDistrictSpinner.getSelectedItemPosition() > 0){
+//            districtsCompany.get(companyDistrictSpinner.getSelectedItemPosition()-1);
+//        }
+//        Village companyVillage = new Village ();
+//        if(companyVillageSpinner.getSelectedItemPosition() > 0){
+//            villagesCompany.get(companyVillageSpinner.getSelectedItemPosition()-1);
+//        }
+//
+//        License license = licenses.get(licenseSpinner.getSelectedItemPosition()-1);
+//        LicenseRegion licenseRegion = licenseRegions.get(licenseRegionSpinner.getSelectedItemPosition()-1);
 
-        Province companyProvince = new Province ();
-        if(companyProvinceSpinner.getSelectedItemPosition() > 0){
-            provincesCompany.get(companyProvinceSpinner.getSelectedItemPosition()-1);
-        }
-        Regency companyRegency = new Regency ();
-        if(companyRegencySpinner.getSelectedItemPosition() > 0){
-            regenciesCompany.get(companyRegencySpinner.getSelectedItemPosition()-1);
-        }
-        District companyDistrict = new District ();
-        if(companyDistrictSpinner.getSelectedItemPosition() > 0){
-            districtsCompany.get(companyDistrictSpinner.getSelectedItemPosition()-1);
-        }
-        Village companyVillage = new Village ();
-        if(companyVillageSpinner.getSelectedItemPosition() > 0){
-            villagesCompany.get(companyVillageSpinner.getSelectedItemPosition()-1);
-        }
+//        RegisterService registerService =
+//                RegisterClient.getClient().create(RegisterService.class);
+//        Call<SubmitResponse> call = registerService.submit(
+//                mIdTypes.get(idTypeSpinner.getSelectedItemPosition()),
+//                idEditText.getText().toString(),
+//                nameEditText.getText().toString(),
+//                phoneEditText.getText().toString(),
+//                addressEditText.getText().toString(),
+//
+//                String.valueOf(province.getId()),
+//                province.getName(),
+//                String.valueOf(regency.getId()),
+//                regency.getName(),
+//                String.valueOf(district.getId()),
+//                district.getName(),
+//                String.valueOf(village.getId()),
+//                village.getName(),
+//
+//                companyNpwpEditText.getText().toString(),
+//                companyNoEditText.getText().toString(),
+//                companyNameEditText.getText().toString(),
+//                companyAddressEditText.getText().toString(),
+//                companyPhoneEditText.getText().toString(),
+//
+//                String.valueOf(companyProvince.getId() > 0 ? companyProvince.getId() : ""),
+//                companyProvince.getName(),
+//                String.valueOf(companyRegency.getId() > 0 ? companyRegency.getId() : ""),
+//                companyRegency.getName(),
+//                String.valueOf(companyDistrict.getId() > 0 ? companyDistrict.getId() : ""),
+//                companyDistrict.getName(),
+//                String.valueOf(companyVillage.getId() > 0 ? companyVillage.getId() : ""),
+//                companyVillage.getName(),
+//
+//                String.valueOf(license.getId()),
+//                license.getName(),
+//                String.valueOf(licenseRegion.getId()),
+//                licenseRegion.getName(),
+//
+//                FileUtil.rename(attachment.getName()),
+//                attachmentBase64);
 
-        License license = licenses.get(licenseSpinner.getSelectedItemPosition()-1);
-        LicenseRegion licenseRegion = licenseRegions.get(licenseRegionSpinner.getSelectedItemPosition()-1);
+//        call.enqueue(new Callback<SubmitResponse>() {
+//            @Override
+//            public void onResponse(Call<SubmitResponse> call, Response<SubmitResponse> response) {
+//                dismissProgressBar(process);
+//                SubmitResponse submitResponse = response.body();
+//                if(submitResponse.isSuccess()){
+//                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+//                    View view = getLayoutInflater().inflate(R.layout.success_dialog, null);
+//                    builder.setView(view);
+//                    builder.setCancelable(false);
+//                    builder.setPositiveButton("OK", null);
+//                    builder.setTitle("Berhasil");
+//                    ((TextView) view.findViewById(R.id.success_no_registration))
+//                            .setText(submitResponse.getRegistrationNumber());
+//                    ((TextView) view.findViewById(R.id.success_name))
+//                            .setText(submitResponse.getName());
+//                    if(!submitResponse.getCompanyName().equals(""))
+//                        ((TextView) view.findViewById(R.id.success_company_name))
+//                                .setText(submitResponse.getCompanyName());
+//                    builder.show();
+//                }else{
+//                    showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
+//                }
+//            }
+//
+//            @Override
+//            public void onFailure(Call<SubmitResponse> call, Throwable t) {
+//                dismissProgressBar(process);
+//                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
+//            }
+//        });
+        final MediaType TYPE = MediaType.parse(FileUtil.getType(this, attachmentUri));
 
-        RegisterService registerService =
-                RegisterClient.getClient().create(RegisterService.class);
-        Call<SubmitResponse> call = registerService.submit(
-                mIdTypes.get(idTypeSpinner.getSelectedItemPosition()),
-                idEditText.getText().toString(),
-                nameEditText.getText().toString(),
-                phoneEditText.getText().toString(),
-                addressEditText.getText().toString(),
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("jenis_identitas", /*mIdTypes.get(idTypeSpinner.getSelectedItemPosition())*/"KTP")
+                .addFormDataPart("id_pemohon", /*idEditText.getText().toString()*/"121300054")
+                .addFormDataPart("nama_pemohon", /*nameEditText.getText().toString()*/"Faqih")
+                .addFormDataPart("telp_pemohon", /*phoneEditText.getText().toString()*/"082345075")
+                .addFormDataPart("alamat_pemohon", /*addressEditText.getText().toString()*/"Kalitengah")
 
-                String.valueOf(province.getId()),
-                province.getName(),
-                String.valueOf(regency.getId()),
-                regency.getName(),
-                String.valueOf(district.getId()),
-                district.getName(),
-                String.valueOf(village.getId()),
-                village.getName(),
+                .addFormDataPart("provinsi_pemohon", /*String.valueOf(province.getId())*/"13")
+                .addFormDataPart("provinsi_pemohon_text", /*province.getName()*/"JAWA TENGAH")
+                .addFormDataPart("kabupaten_pemohon", /*String.valueOf(regency.getId())*/"188")
+                .addFormDataPart("kabupaten_pemohon_text", /*regency.getName()*/"KEBUMEN")
+                .addFormDataPart("kecamatan_pemohon", /*String.valueOf(district.getId())*/"2620")
+                .addFormDataPart("kecamatan_pemohon_text", /*district.getName()*/"GOMBONG")
+                .addFormDataPart("kelurahan_pemohon", /*String.valueOf(village.getId())*/"31945")
+                .addFormDataPart("kelurahan_pemohon_text", /*village.getName()*/"GOMBONG")
 
-                companyNpwpEditText.getText().toString(),
-                companyNoEditText.getText().toString(),
-                companyNameEditText.getText().toString(),
-                companyAddressEditText.getText().toString(),
-                companyPhoneEditText.getText().toString(),
+                .addFormDataPart("npwp_perusahaan", companyNpwpEditText.getText().toString())
+                .addFormDataPart("no_register_perusahaan", companyNoEditText.getText().toString())
+                .addFormDataPart("nama_perusahaan", companyNameEditText.getText().toString())
+                .addFormDataPart("alamat_perusahaan", companyAddressEditText.getText().toString())
+                .addFormDataPart("telepon_perusahaan", companyPhoneEditText.getText().toString())
 
-                String.valueOf(companyProvince.getId() > 0 ? companyProvince.getId() : ""),
-                companyProvince.getName(),
-                String.valueOf(companyRegency.getId() > 0 ? companyRegency.getId() : ""),
-                companyRegency.getName(),
-                String.valueOf(companyDistrict.getId() > 0 ? companyDistrict.getId() : ""),
-                companyDistrict.getName(),
-                String.valueOf(companyVillage.getId() > 0 ? companyVillage.getId() : ""),
-                companyVillage.getName(),
+                .addFormDataPart("provinsi_perusahaan", /*String.valueOf(companyProvince.getId() > 0 ? companyProvince.getId() : "")*/"")
+                .addFormDataPart("provinsi_perusahaan_text", /*companyProvince.getName()*/"")
+                .addFormDataPart("kabupaten_perusahaan", /*String.valueOf(companyRegency.getId() > 0 ? companyRegency.getId() : "")*/"")
+                .addFormDataPart("kabupaten_perusahaan_text", /*companyRegency.getName()*/"")
+                .addFormDataPart("kecamatan_perusahaan", /*String.valueOf(companyDistrict.getId() > 0 ? companyDistrict.getId() : "")*/"")
+                .addFormDataPart("kecamatan_perusahaan_text", /*companyDistrict.getName()*/"")
+                .addFormDataPart("kelurahan_perusahaan", /*String.valueOf(companyVillage.getId() > 0 ? companyVillage.getId() : "")*/"")
+                .addFormDataPart("kelurahan_perusahaan_text", /*companyVillage.getName()*/"")
 
-                String.valueOf(license.getId()),
-                license.getName(),
-                String.valueOf(licenseRegion.getId()),
-                licenseRegion.getName(),
+                .addFormDataPart("jenis_izin", /*String.valueOf(license.getId())*/"246")
+                .addFormDataPart("nama_perizinan", /*license.getName()*/"IZIN KERJA PERAWAT ANESTESI (  SIKPA ) TERNATE")
+                .addFormDataPart("unit_kerja_id", /*String.valueOf(licenseRegion.getId())*/"13481")
+                .addFormDataPart("unit_kerja_text", /*licenseRegion.getName()*/"DINAS PENANAMAN MODAL DAN PELAYANAN PERIZINAN TERPADU SATU PINTU")
 
-                FileUtil.rename(attachment.getName()),
-                attachmentBase64);
+                .addFormDataPart("lampiran", FileUtil.rename(attachment.getName()), RequestBody.create(TYPE, attachment))
+                .addFormDataPart("btn_submit", "true")
+                .build();
 
-        call.enqueue(new Callback<SubmitResponse>() {
+//        (new MyAsyncTask()).execute(requestBody);
+
+        Map<String, RequestBody> map = new HashMap<>();
+        map.put("jenis_identitas", RequestBody.create(MultipartBody.FORM, "KTP"));
+        map.put("id_pemohon", RequestBody.create(MultipartBody.FORM, "121300054"));
+        map.put("nama_pemohon", RequestBody.create(MultipartBody.FORM, "Faqih"));
+        map.put("telp_pemohon", RequestBody.create(MultipartBody.FORM, "082345075"));
+        map.put("alamat_pemohon", RequestBody.create(MultipartBody.FORM, "Kalitengah"));
+
+        map.put("provinsi_pemohon", RequestBody.create(MultipartBody.FORM, "13"));
+        map.put("provinsi_pemohon_text", RequestBody.create(MultipartBody.FORM, "JAWA TENGAH"));
+        map.put("kabupaten_pemohon", RequestBody.create(MultipartBody.FORM, "188"));
+        map.put("kabupaten_pemohon_text", RequestBody.create(MultipartBody.FORM, "KEBUMEN"));
+        map.put("kecamatan_pemohon", RequestBody.create(MultipartBody.FORM, "2620"));
+        map.put("kecamatan_pemohon_text", RequestBody.create(MultipartBody.FORM, "GOMBONG"));
+        map.put("kelurahan_pemohon", RequestBody.create(MultipartBody.FORM, "31945"));
+        map.put("kelurahan_pemohon_text", RequestBody.create(MultipartBody.FORM, "GOMBONG"));
+
+        map.put("npwp_perusahaan", RequestBody.create(MultipartBody.FORM, companyNpwpEditText.getText().toString()));
+        map.put("no_register_perusahaan", RequestBody.create(MultipartBody.FORM, companyNoEditText.getText().toString()));
+        map.put("nama_perusahaan", RequestBody.create(MultipartBody.FORM, companyNameEditText.getText().toString()));
+        map.put("alamat_perusahaan", RequestBody.create(MultipartBody.FORM, companyAddressEditText.getText().toString()));
+        map.put("telepon_perusahaan", RequestBody.create(MultipartBody.FORM, companyPhoneEditText.getText().toString()));
+
+        map.put("provinsi_perusahaan", RequestBody.create(MultipartBody.FORM, ""));
+        map.put("provinsi_perusahaan_text", RequestBody.create(MultipartBody.FORM, ""));
+        map.put("kabupaten_perusahaan", RequestBody.create(MultipartBody.FORM, ""));
+        map.put("kabupaten_perusahaan_text", RequestBody.create(MultipartBody.FORM, ""));
+        map.put("kecamatan_perusahaan", RequestBody.create(MultipartBody.FORM, ""));
+        map.put("kecamatan_perusahaan_text", RequestBody.create(MultipartBody.FORM, ""));
+        map.put("kelurahan_perusahaan", RequestBody.create(MultipartBody.FORM, ""));
+        map.put("kelurahan_perusahaan_text", RequestBody.create(MultipartBody.FORM, ""));
+
+        map.put("jenis_izin", RequestBody.create(MultipartBody.FORM, "246"));
+        map.put("nama_perizinan", RequestBody.create(MultipartBody.FORM, "IZIN KERJA PERAWAT ANESTESI (  SIKPA ) TERNATE"));
+        map.put("unit_kerja_id", RequestBody.create(MultipartBody.FORM, "13481"));
+        map.put("unit_kerja_text", RequestBody.create(MultipartBody.FORM, "DINAS PENANAMAN MODAL DAN PELAYANAN PERIZINAN TERPADU SATU PINTU"));
+
+        map.put("btn_submit", RequestBody.create(MultipartBody.FORM, "true"));
+
+        OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://ternatekota.sicantik.layanan.go.id")
+                .client(httpClient.build())
+                .build();
+
+        RequestBody filePart = RequestBody.create(MediaType.parse(FileUtil.getType(this, attachmentUri)), attachment);
+
+        MultipartBody.Part part = MultipartBody.Part.createFormData("lampiran", attachment.getName(), filePart);
+
+        RegisterService registerClient = retrofit.create(RegisterService.class);
+        Call<ResponseBody> call = registerClient.submit2(map, part);
+        call.enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<SubmitResponse> call, Response<SubmitResponse> response) {
-                dismissProgressBar(process);
-                SubmitResponse submitResponse = response.body();
-                if(submitResponse.isSuccess()){
-                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    View view = getLayoutInflater().inflate(R.layout.success_dialog, null);
-                    builder.setView(view);
-                    builder.setCancelable(false);
-                    builder.setPositiveButton("OK", null);
-                    builder.setTitle("Berhasil");
-                    ((TextView) view.findViewById(R.id.success_no_registration))
-                            .setText(submitResponse.getRegistrationNumber());
-                    ((TextView) view.findViewById(R.id.success_name))
-                            .setText(submitResponse.getName());
-                    if(!submitResponse.getCompanyName().equals(""))
-                        ((TextView) view.findViewById(R.id.success_company_name))
-                                .setText(submitResponse.getCompanyName());
-                    builder.show();
-                }else{
-                    showAlert("Gagal", "Internal Server Error:\n"+response.body().getMessage(), "OK", null);
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                try {
+                    String responseStr = response.body().string();
+                    Document doc = Jsoup.parse(responseStr);
+                    Element blockContent = doc.select(".block-content").first();
+                    Element table = blockContent.getElementsByTag("table").first();
+                    Elements bs = table.getElementsByTag("b");
+                    for (Element b : bs) {
+                        Log.e("ke berapa", b.toString());
+                    }
+                    int maxLogSize = 100;
+                    for (int i = 0; i <= responseStr.length() / maxLogSize; i++) {
+                        int start = i * maxLogSize;
+                        int end = (i + 1) * maxLogSize;
+                        end = end > responseStr.length() ? responseStr.length() : end;
+                        Log.e("RESPONSE", responseStr.substring(start, end));
+                    }
+                }catch (IOException ie){
+                    ie.printStackTrace();
                 }
             }
 
             @Override
-            public void onFailure(Call<SubmitResponse> call, Throwable t) {
-                dismissProgressBar(process);
-                showAlert("Gagal", "Periksa koneksi internet anda.", "OK", null);
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+
             }
         });
     }
+
+
+//    public static class MyAsyncTask extends AsyncTask<RequestBody, Void, Void>{
+//        @Override
+//        protected Void doInBackground(RequestBody... params) {
+//            Request request = new Request.Builder()
+//                    .url("http://ternatekota.sicantik.layanan.go.id/perizinan_online")
+//                    .post(params[0])
+//                    .build();
+//
+//            try {
+//                OkHttpClient client = new OkHttpClient();
+//                okhttp3.Response response = client.newCall(request).execute();
+//                String responseStr = response.body().string();
+//                Document doc = Jsoup.parse(responseStr);
+//                Element blockContent = doc.select(".block-content").first();
+//                Element table = blockContent.getElementsByTag("table").first();
+//                Elements bs = table.getElementsByTag("b");
+//                for(Element b : bs){
+//                    Log.e("ke berapa", b.toString());
+//                }
+////                int maxLogSize = 100;
+////                for(int i = 0; i <= responseStr.length() / maxLogSize; i++) {
+////                    int start = i * maxLogSize;
+////                    int end = (i+1) * maxLogSize;
+////                    end = end > responseStr.length() ? responseStr.length() : end;
+////                    Log.e("RESPONSE", responseStr.substring(start, end));
+////                }
+//            }catch (IOException ie){
+//                ie.printStackTrace();
+//            }
+//            return null;
+//        }
+//    }
 }
