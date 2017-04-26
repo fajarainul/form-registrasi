@@ -35,6 +35,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.File;
 import java.util.Arrays;
 
 public class WebActivity extends AppCompatActivity {
@@ -175,7 +176,12 @@ public class WebActivity extends AppCompatActivity {
                 }
             }
             if(results != null){
-                if(!Arrays.asList(mimeTypes).contains(FileUtil.getType(this, results[0]))) {
+                String attachmentPath = FileUtil.getPath(this, results[0]);
+                File attachment = new File(attachmentPath);
+                if((attachment.length() / 1000 / 1000) > 2){
+                    results = null;
+                    showAlert("Gagal", "Ukuran file tidak boleh lebih dari 2Mb.", "OK", null);
+                }else if(!Arrays.asList(mimeTypes).contains(FileUtil.getType(this, results[0]))) {
                     results = null;
                     showAlert("Gagal", "Silakan pilih file .xls .xlsx .doc .docx .pdf.", "OK", null);
                 }
@@ -205,7 +211,12 @@ public class WebActivity extends AppCompatActivity {
                 }
 
                 if(result !=null){
-                    if(!Arrays.asList(mimeTypes).contains(FileUtil.getType(this, result))) {
+                    String attachmentPath = FileUtil.getPath(this, result);
+                    File attachment = new File(attachmentPath);
+                    if((attachment.length() / 1000 / 1000) > 2){
+                        result = null;
+                        showAlert("Gagal", "Ukuran file tidak boleh lebih dari 2Mb.", "OK", null);
+                    }else if(!Arrays.asList(mimeTypes).contains(FileUtil.getType(this, result))) {
                         result = null;
                         showAlert("Gagal", "Silakan pilih file .xls .xlsx .doc .docx .pdf.", "OK", null);
                     }
